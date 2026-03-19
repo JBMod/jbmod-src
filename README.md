@@ -19,6 +19,14 @@ JBMod is available for free on Steam. Make sure to use the `github` branch for t
 
 * [Download on Steam](https://store.steampowered.com/app/2158860/JBMod/)
 
+## Having problems? Got a suggestion?
+
+JBMod uses Github as its official bug tracker and request tracker.
+
+* If you have a **bug**, **crash**, or other **issue**, create a new [Bug report](https://github.com/JBMod/jbmod-src/issues/new?labels=bug&template=bug_report.md).
+* If you have a **suggestion** or **request**, create a new [Feature request](https://github.com/JBMod/jbmod-src/issues/new?labels=enhancement&template=feature_request.md).
+* Or if you want to fix it yourself, keep reading below!
+
 ## Build Instructions
 
 ### Windows

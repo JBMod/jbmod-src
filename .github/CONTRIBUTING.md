@@ -1,6 +1,6 @@
 # How to Contribute
 
-1. File a bug at https://github.com/JBMod/jbmod/issues (if there
+1. File a bug at https://github.com/JBMod/jbmod-src/issues (if there
    isn't one already).  If your patch is going to be large, you should start a
    discussion on GitHub first.
 
