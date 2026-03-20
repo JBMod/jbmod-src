@@ -1,0 +1,23 @@
+$Macro OUTBINNAME "srcds"
+
+$Conditional "MOD_LAUNCHER" "1"
+$Conditional "DEDICATED" "1"
+
+$Include "launcher_main.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$PreprocessorDefinitions	"$BASE;MOD_APPID=2181210"
+	}
+}
+
+$Project "Dedicated Main (JBMod)"
+{
+    $Folder "Resource Files" [$WINDOWS]
+    {
+        $File   "launcher_main_jbmod.rc"
+        $File   "res\jbmod.ico"
+    }
+}

@@ -36,6 +36,7 @@ typedef int (*LauncherMain_t)( int argc, char **argv );
 #error
 #endif
 
+#ifndef DEDICATED
 #ifdef WIN32
 // hinting the nvidia driver to use the dedicated graphics card in an optimus configuration
 // for more info, see: http://developer.download.nvidia.com/devzone/devcenter/gamegraphics/files/OptimusRenderingPolicies.pdf
@@ -44,6 +45,7 @@ extern "C" { _declspec( dllexport ) DWORD NvOptimusEnablement = 0x00000001; }
 // same thing for AMD GPUs using v13.35 or newer drivers
 extern "C" { __declspec( dllexport ) int AmdPowerXpressRequestHighPerformance = 1; }
 
+#endif
 #endif
 
 
@@ -217,12 +219,14 @@ static bool GetGameInstallDir( const char *pRootDir, char *pszBuf, int nBufSize 
 	}
 
 	uint32_t unLength = 0;
-	if ( pSteamApps->BIsAppInstalled( k_unSDK2013MPAppId ) )
+	if ( pSteamApps->BIsAppInstalled( k_unMyModAppid ) )
 	{
-		unLength = pSteamApps->GetAppInstallDir( k_unSDK2013MPAppId, pszBuf, nBufSize );
+		unLength = pSteamApps->GetAppInstallDir( k_unMyModAppid, pszBuf, nBufSize );
 	}
 
+#ifndef DEDICATED
 	UnloadSteam();
+#endif
 
 	if ( unLength == 0 )
 	{
@@ -458,7 +462,13 @@ int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 
 	SetEnvironmentVariableA( "SDK_EXEC_DIR", szGameInstallDir );
 
+#ifdef DEDICATED
+#define LAUNCHER_PROCNAME	"DedicatedMain"
+#define LAUNCHER_DLL_PATH	"%s\\" PLATFORM_BIN_DIR "\\dedicated.dll"
+#else
+#define LAUNCHER_PROCNAME	"LauncherMain"
 #define LAUNCHER_DLL_PATH	"%s\\" PLATFORM_BIN_DIR "\\launcher.dll"
+#endif
 #define LAUNCHER_PATH		"%s\\" PLATFORM_BIN_DIR
 
 	_snprintf( szBuffer, sizeof( szBuffer ), "PATH=" LAUNCHER_PATH ";%s", pBinaryGameDir, pPath );
@@ -486,7 +496,7 @@ int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 		return 0;
 	}
 
-	LauncherMain_t main = (LauncherMain_t)GetProcAddress( launcher, "LauncherMain" );
+	LauncherMain_t main = (LauncherMain_t)GetProcAddress( launcher, LAUNCHER_PROCNAME );
 	return main( hInstance, hPrevInstance, lpCmdLine, nCmdShow );
 }
 

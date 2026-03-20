@@ -69,6 +69,7 @@ $Group "everything"
 
 $Group "dedicated"
 {
+	"dedicated_main"
 	"mathlib"
 	"server"
 	"tier1"
