@@ -1,0 +1,4 @@
+JBMod MOTD
+
+You are playing JBMod
+Visit the official JBMod web site @ www.jbmod.com

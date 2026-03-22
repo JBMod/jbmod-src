@@ -1,0 +1,15 @@
+// Default mapcycle file for JBMod
+//
+// DO NOT MODIFY THIS FILE!
+// Instead, copy it to mapcycle.txt and modify that file.  If no custom mapcycle.txt file is found,
+// this file will be used as the default.
+//
+// Also, note that the "mapcyclefile" convar can be used to specify a particular mapcycle file.
+
+dm_lockdown
+dm_overwatch
+dm_powerhouse
+dm_resistance
+dm_runoff
+dm_steamlab
+dm_underpass
