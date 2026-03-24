@@ -1,0 +1,40 @@
+name: Test PRs
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/pull-request.yml'
+      - 'src/**'
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Set up registry for VPC
+      run: reg add 'HKLM\SOFTWARE\Microsoft\VisualStudio\10.0\Projects\{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}' /v DefaultProjectExtension /t REG_SZ /d vcproj /f /reg:32
+
+    - name: Create project files
+      working-directory: ${{ github.workspace }}/src
+      run: devtools\bin\vpc.exe /win64 /jbmod /define:SOURCESDK +everything /mksln x64.sln
+
+    - name: Build
+      working-directory: ${{ github.workspace }}/src
+      run: msbuild /m /p:Configuration=Release x64.sln
+
+  linux:
+    runs-on: ubuntu-latest
+    container: registry.gitlab.steamos.cloud/steamrt/sniper/sdk:latest
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Create project files
+      working-directory: ${{ github.workspace }}/src
+      run: VPC_NINJA_BUILD_MODE=Release devtools/bin/vpc /linux64 /jbmod /ninja /define:SOURCESDK +everything /mksln _vpc_/ninja/x64
+
+    - name: Build
+      working-directory: ${{ github.workspace }}/src
+      run: ninja -f "_vpc_/ninja/x64.ninja" -j$(nproc)
