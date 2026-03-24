@@ -831,7 +831,7 @@ Scheme
 		{
 			"1"
 			{
-				"name"  "HL2MP"
+				"name"  "JBMod"
 				"tall"			"46"
 				"weight" "0"
 				"additive" "0"
@@ -1267,19 +1267,20 @@ Scheme
 		"1"		"resource/HALFLIFE2.ttf"
 		"2"		"resource/HL2crosshairs.ttf"
 		"3"		"resource/HL2MP.ttf"
-		"4"		"resource/linux_fonts/DejaVuSans.ttf"
-		"5"		"resource/linux_fonts/DejaVuSans-Bold.ttf"
-		"6"		"resource/linux_fonts/DejaVuSans-BoldOblique.ttf"
-		"7"		"resource/linux_fonts/DejaVuSans-Oblique.ttf"
-		"8"		"resource/linux_fonts/LiberationSans-Regular.ttf"
-		"9"		"resource/linux_fonts/LiberationSans-Bold.ttf"
-		"10"	"resource/linux_fonts/LiberationMono-Regular.ttf"
+		"4"		"resource/jbmod.ttf"
+		"5"		"resource/linux_fonts/DejaVuSans.ttf"
+		"6"		"resource/linux_fonts/DejaVuSans-Bold.ttf"
+		"7"		"resource/linux_fonts/DejaVuSans-BoldOblique.ttf"
+		"8"		"resource/linux_fonts/DejaVuSans-Oblique.ttf"
+		"9"		"resource/linux_fonts/LiberationSans-Regular.ttf"
+		"10"		"resource/linux_fonts/LiberationSans-Bold.ttf"
+		"11"	"resource/linux_fonts/LiberationMono-Regular.ttf"
 
-		"11"	"resource/GorDIN-Regular.ttf"
-		"12"	"resource/GorDIN-Bold.ttf"
-		"13"	"resource/GorDIN-Semibold.ttf"
-		"14"	"resource/GorDIN-Black.ttf"
-		"15"	"resource/GorDIN-Light.ttf"
+		"12"	"resource/GorDIN-Regular.ttf"
+		"13"	"resource/GorDIN-Bold.ttf"
+		"14"	"resource/GorDIN-Semibold.ttf"
+		"15"	"resource/GorDIN-Black.ttf"
+		"16"	"resource/GorDIN-Light.ttf"
 	}
 
 }
