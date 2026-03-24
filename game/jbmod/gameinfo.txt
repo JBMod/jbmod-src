@@ -1,7 +1,7 @@
 "GameInfo"
 {
 	game	"JBMod"
-	title	"JBMod"
+	title	"JBMOD"
 	title2	""
 	type multiplayer_only
 	nomodels 0
