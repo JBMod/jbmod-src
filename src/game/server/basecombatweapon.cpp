@@ -27,7 +27,9 @@
 #include "iservervehicle.h"
 #include "func_break.h"
 
-#ifdef HL2MP
+#if defined(JBMOD)
+	#include "jbmod_gamerules.h"
+#elif defined(HL2MP)
 	#include "hl2mp_gamerules.h"
 #endif
 
@@ -619,7 +621,11 @@ void CBaseCombatWeapon::Materialize( void )
 		VPhysicsInitNormal( SOLID_BBOX, GetSolidFlags() | FSOLID_TRIGGER, false );
 		SetMoveType( MOVETYPE_VPHYSICS );
 
+#if defined(JBMOD)
+		JBModRules()->AddLevelDesignerPlacedObject( this );
+#else
 		HL2MPRules()->AddLevelDesignerPlacedObject( this );
+#endif
 	}
 #else
 	SetSolid( SOLID_BBOX );

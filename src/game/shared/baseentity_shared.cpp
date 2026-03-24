@@ -30,7 +30,9 @@
 	#include "waterbullet.h"
 	#include "func_break.h"
 
-#ifdef HL2MP
+#if defined(JBMOD)
+	#include "te_jbmod_shotgun_shot.h"
+#elif defined(HL2MP)
 	#include "te_hl2mp_shotgun_shot.h"
 #endif
 
@@ -2018,7 +2020,11 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 #if defined( HL2MP ) && defined( GAME_DLL )
 	if ( bDoServerEffects == false )
 	{
+#if defined(JBMOD)
+		TE_JBModFireBullets( entindex(), tr.startpos, info.m_vecDirShooting, info.m_iAmmoType, iEffectSeed, info.m_iShots, info.m_vecSpread.x, bDoTracers, bDoImpacts );
+#else
 		TE_HL2MPFireBullets( entindex(), tr.startpos, info.m_vecDirShooting, info.m_iAmmoType, iEffectSeed, info.m_iShots, info.m_vecSpread.x, bDoTracers, bDoImpacts );
+#endif
 	}
 #endif
 

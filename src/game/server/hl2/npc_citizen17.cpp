@@ -17,10 +17,12 @@
 #include "items.h"
 
 
-#ifdef HL2MP
-#include "hl2mp/weapon_crowbar.h"
+#if defined(JBMOD)
+	#include "jbmod/weapon_crowbar.h"
+#elif defined(HL2MP)
+	#include "hl2mp/weapon_crowbar.h"
 #else
-#include "weapon_crowbar.h"
+	#include "weapon_crowbar.h"
 #endif
 
 #include "eventqueue.h"

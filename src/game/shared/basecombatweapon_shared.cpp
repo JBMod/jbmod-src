@@ -32,7 +32,9 @@
 #include "fmtstr.h"
 #include "gameweaponmanager.h"
 
-#ifdef HL2MP
+#if defined(JBMOD)
+	#include "jbmod_gamerules.h"
+#elif defined(HL2MP)
 	#include "hl2mp_gamerules.h"
 #endif
 
@@ -770,7 +772,9 @@ void CBaseCombatWeapon::OnPickedUp( CBaseCombatCharacter *pNewOwner )
 		m_OnNPCPickup.FireOutput(pNewOwner, this);
 	}
 
-#ifdef HL2MP
+#if defined(JBMOD)
+	JBModRules()->RemoveLevelDesignerPlacedObject( this );
+#elif defined(HL2MP)
 	HL2MPRules()->RemoveLevelDesignerPlacedObject( this );
 #endif
 

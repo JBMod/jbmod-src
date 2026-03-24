@@ -9,7 +9,9 @@
 #include "c_team.h"
 #include "gamestringpool.h"
 
-#ifdef HL2MP
+#if defined(JBMOD)
+#include "jbmod_gamerules.h"
+#elif defined(HL2MP)
 #include "hl2mp_gamerules.h"
 #endif
 

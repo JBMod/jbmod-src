@@ -9,12 +9,18 @@
 #include "utlrbtree.h"
 #include "hl2_shareddefs.h"
 
-#ifdef HL2MP
-#ifdef CLIENT_DLL
-#include "hl2mp/c_hl2mp_player.h"
-#else
-#include "hl2mp/hl2mp_player.h"
-#endif
+#if defined(JBMOD)
+	#ifdef CLIENT_DLL
+	#include "jbmod/c_jbmod_player.h"
+	#else
+	#include "jbmod/jbmod_player.h"
+	#endif
+#elif defined(HL2MP)
+	#ifdef CLIENT_DLL
+	#include "hl2mp/c_hl2mp_player.h"
+	#else
+	#include "hl2mp/hl2mp_player.h"
+	#endif
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -533,7 +539,9 @@ void CHL2GameMovement::CheckParameters( void )
 {
 #if defined( HL2_DLL ) || defined( HL2_CLIENT_DLL )
 	// Handle speed changes here so they are predicted correctly.
-#ifdef HL2MP
+#if defined(JBMOD)
+	CJBMod_Player* pHL2Player = static_cast< CJBMod_Player* >( player );
+#elif defined(HL2MP)
 	CHL2MP_Player* pHL2Player = static_cast< CHL2MP_Player* >( player );
 #else
 	CHL2_Player* pHL2Player = static_cast< CHL2_Player* >( player );
@@ -548,7 +556,9 @@ void CHL2GameMovement::ReduceTimers( void )
 {
 #if defined( HL2_DLL ) || defined( HL2_CLIENT_DLL )
 	// Handle speed changes here so they are predicted correctly.
-#ifdef HL2MP
+#if defined(JBMOD)
+	CJBMod_Player* pHL2Player = static_cast< CJBMod_Player* >( player );
+#elif defined(HL2MP)
 	CHL2MP_Player* pHL2Player = static_cast< CHL2MP_Player* >( player );
 #else
 	CHL2_Player* pHL2Player = static_cast< CHL2_Player* >( player );

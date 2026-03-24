@@ -16,7 +16,11 @@
 
 
 #include "basegrenade_shared.h"
-#include "hl2mp/weapon_slam.h"
+#if defined(JBMOD)
+	#include "jbmod/weapon_slam.h"
+#else
+	#include "hl2mp/weapon_slam.h"
+#endif
 
 class CSoundPatch;
 

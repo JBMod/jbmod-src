@@ -14,8 +14,10 @@
 #include "physics_saverestore.h"
 #include "world.h"
 
-#ifdef HL2MP
-#include "hl2mp_gamerules.h"
+#if defined(JBMOD)
+	#include "jbmod_gamerules.h"
+#elif defined(HL2MP)
+	#include "hl2mp_gamerules.h"
 #endif
 
 #ifdef TF_DLL
@@ -310,7 +312,11 @@ void CItem::FallThink ( void )
 		m_vOriginalSpawnOrigin = GetAbsOrigin();
 		m_vOriginalSpawnAngles = GetAbsAngles();
 
+#if defined(JBMOD)
+		JBModRules()->AddLevelDesignerPlacedObject( this );
+#else
 		HL2MPRules()->AddLevelDesignerPlacedObject( this );
+#endif
 	}
 #endif // HL2MP
 
@@ -485,7 +491,9 @@ void CItem::ItemTouch( CBaseEntity *pOther )
 		{
 			UTIL_Remove( this );
 
-#ifdef HL2MP
+#if defined(JBMOD)
+			JBModRules()->RemoveLevelDesignerPlacedObject( this );
+#else
 			HL2MPRules()->RemoveLevelDesignerPlacedObject( this );
 #endif
 		}

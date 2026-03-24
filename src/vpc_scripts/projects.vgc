@@ -17,6 +17,7 @@ $Project "client"
 {
 	"game\client\client_tf.vpc"			[$TF]
 	"game\client\client_hl2mp.vpc"		[$HL2MP]
+	"game\client\client_jbmod.vpc"		[$JBMOD]
 }
 
 $Project "fgdlib"
@@ -52,6 +53,7 @@ $Project "server"
 {
 	"game\server\server_tf.vpc"			[$TF]
 	"game\server\server_hl2mp.vpc"		[$HL2MP]
+	"game\server\server_jbmod.vpc"		[$JBMOD]
 }
 
 $Project "dedicated_main"
