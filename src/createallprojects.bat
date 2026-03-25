@@ -1,1 +1,1 @@
-devtools\bin\vpc.exe /hl2mp /tf /define:SOURCESDK +everything /mksln everything.sln
+devtools\bin\vpc.exe /jbmod /define:SOURCESDK +everything /mksln everything.sln
