@@ -42,6 +42,13 @@ fltx4 Pow_FixedPoint_Exponent_SIMD( const fltx4 & x, int exponent)
 }
 
 
+// TODO (jbmod/jbmod-src#123): need a fix for linux32
+// 2013 particles.a uses old __m128 mangling (U8__vector) while GCC 10+ mangles it as Dv4_f
+#if defined(__GNUC__) && defined(POSIX) && !defined(PLATFORM_64BITS)
+__asm__(".globl _Z28Pow_FixedPoint_Exponent_SIMDRKU8__vectorfi\n"
+        ".set _Z28Pow_FixedPoint_Exponent_SIMDRKU8__vectorfi,"
+        " _Z28Pow_FixedPoint_Exponent_SIMDRKDv4_fi");
+#endif
 
 
 /*

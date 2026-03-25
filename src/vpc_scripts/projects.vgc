@@ -158,3 +158,8 @@ $Project "vvis_launcher"
 	"utils\vvis_launcher\vvis_launcher.vpc" [$WINDOWS]
 }
 
+$Project "vmpi"
+{
+	"utils\vmpi\vmpi.vpc" [$WIN32]
+}
+

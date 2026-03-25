@@ -37,6 +37,10 @@
 #include <stdio.h>
 #include "memdbgoff.h"
 
+// TODO (jbmod/jbmod-src#123): need a fix for linux32
+#if defined(POSIX) && !defined(PLATFORM_64BITS)
+IMemAlloc *g_pMemAlloc = NULL;
+#endif
 
 #if POSIX
 #define __cdecl

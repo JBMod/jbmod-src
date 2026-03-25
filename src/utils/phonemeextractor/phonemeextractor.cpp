@@ -13,7 +13,10 @@
 #include <stdio.h>
 #include <windows.h>
 #include <tchar.h>
+#pragma warning(push)
+#pragma warning(disable: 4996)
 #include "sphelper.h"
+#pragma warning(pop)
 #include "spddkhlp.h"
 // ATL Header Files
 #include <atlbase.h>

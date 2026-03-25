@@ -35,6 +35,20 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+// TODO (jbmod/jbmod-src#123): need a fix for linux32
+#if defined(POSIX) && !defined(PLATFORM_64BITS)
+extern "C" {
+	float  __acosf_finite(float x)              { return acosf(x); }
+	double __pow_finite(double x, double y)     { return pow(x, y); }
+	float  __powf_finite(float x, float y)      { return powf(x, y); }
+	double __log_finite(double x)               { return log(x); }
+	float  __logf_finite(float x)               { return logf(x); }
+	double __exp_finite(double x)               { return exp(x); }
+	float  __expf_finite(float x)               { return expf(x); }
+	double __atan2_finite(double y, double x)   { return atan2(y, x); }
+}
+#endif
+
 bool s_bMathlibInitialized = false;
 
 #ifdef PARANOID

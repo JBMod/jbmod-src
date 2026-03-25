@@ -14,7 +14,7 @@ $Configuration
 	{
 		$AdditionalIncludeDirectories		"$BASE,..\common,zlib,.\"
 		$AdditionalIncludeDirectories		"$BASE,$SRCDIR\thirdparty\libcurl\include"
-		$PreprocessorDefinitions			"$BASE;PROTECTED_THINGS_DISABLE;MPI"
+		$PreprocessorDefinitions			"$BASE;PROTECTED_THINGS_DISABLE;MPI;CURL_STATICLIB"
 	}
 }
 

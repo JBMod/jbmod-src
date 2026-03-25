@@ -75,7 +75,11 @@ CSecureLaunchSystem &SecureLaunchSystem( FnUnsafeCmdLineProcessor *pfnUnsafeCmdL
 	{
 		DebuggerBreakIfDebugging();
 		// TODO: Do better than this. But OSX doesn't have Plat_ExitProcessWithError.
+#ifdef PLATFORM_64BITS // TODO (jbmod/jbmod-src#123): need a fix for win32
 		Plat_ExitProcess( 3 );
+#else
+		exit( 3 );
+#endif
 	}
 
 
