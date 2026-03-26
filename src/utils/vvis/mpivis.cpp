@@ -623,7 +623,11 @@ void RunMPIPortalFlow()
 		Msg( "VVIS worker finished. Over and out.\n" );
 		VMPI_SetCurrentStage( "worker done" );
 
+#ifdef PLATFORM_64BITS // TODO (jbmod/jbmod-src#123): need a fix for win32
 		Plat_ExitProcess( 0 );
+#else
+		exit( 0 );
+#endif
 	}
 
 	if ( g_bMPIMaster )

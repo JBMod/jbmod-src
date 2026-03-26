@@ -17,8 +17,8 @@ $Configuration	"Debug"
 {
 	$General
 	{
-		$OutputDirectory		"Debug_dx8"	
-		$IntermediateDirectory	"Debug_dx8"
+		$OutputDirectory		"Debug_dx8$PLATSUBDIR"	
+		$IntermediateDirectory	"Debug_dx8$PLATSUBDIR"
 	}
 }
 
@@ -26,8 +26,8 @@ $Configuration	"Release"
 {
 	$General
 	{
-		$OutputDirectory		"Release_dx8"
-		$IntermediateDirectory	"Release_dx8"
+		$OutputDirectory		"Release_dx8$PLATSUBDIR"
+		$IntermediateDirectory	"Release_dx8$PLATSUBDIR"
 	}
 }
 

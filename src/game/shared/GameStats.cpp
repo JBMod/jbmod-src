@@ -1228,6 +1228,7 @@ void CBaseGameStats_Driver::ResetData()
 	pKV->SetUint64( "CPUFeatures2", cpu.m_nFeatures[ 2 ] );
 	pKV->SetInt( "NumCores", cpu.m_nPhysicalProcessors );
 	
+#ifdef PLATFORM_64BITS // TODO (jbmod/jbmod-src#123): need a fix for win32
 	// Capture memory stats as well.
 	MemoryInformation memInfo;
 	if ( GetMemoryInformation( &memInfo ) )
@@ -1237,6 +1238,7 @@ void CBaseGameStats_Driver::ResetData()
 		pKV->SetInt( "VirtualRamMbTotal",      memInfo.m_nVirtualRamMbTotal );
 		pKV->SetInt( "VirtualRamMbAvailable",  memInfo.m_nVirtualRamMbAvailable );
 	}
+#endif
 			
 	MaterialAdapterInfo_t gpu;
 	materials->GetDisplayAdapterInfo( materials->GetCurrentAdapter(), gpu );

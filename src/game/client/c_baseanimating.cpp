@@ -1574,6 +1574,7 @@ void C_BaseAnimating::BuildTransformations( CStudioHdr *hdr, Vector *pos, Quater
 					ConcatTransforms( parentMX, bonematrix, goalMX );
 				}
 
+#ifdef PLATFORM_64BITS // TODO (jbmod/jbmod-src#123): need a fix for win32
 				// get jiggle properties from QC data
 				mstudiojigglebone_t *jiggleInfo = (mstudiojigglebone_t *)pbones[i].pProcedure( );
 
@@ -1584,6 +1585,7 @@ void C_BaseAnimating::BuildTransformations( CStudioHdr *hdr, Vector *pos, Quater
 
 				// do jiggle physics
 				m_pJiggleBones->BuildJiggleTransformations( i, gpGlobals->realtime, jiggleInfo, goalMX, GetBoneForWrite( i ), this->ShouldFlipViewModel() );
+#endif
 
 			}
 			else if (hdr->boneParent(i) == -1) 

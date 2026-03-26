@@ -59,6 +59,7 @@ $Group "everything"
 	"vtfdiff"
 	"vvis_dll"
 	"vvis_launcher"
+	"vmpi"
 
 	"game_shader_generic_example"
 

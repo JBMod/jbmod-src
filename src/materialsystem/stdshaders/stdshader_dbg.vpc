@@ -17,8 +17,8 @@ $Configuration	"Debug"
 {
 	$General
 	{
-		$OutputDirectory		"Debug_dbg" [$WINDOWS]
-		$IntermediateDirectory	"Debug_dbg" [$WINDOWS]
+		$OutputDirectory		"Debug_dbg$PLATSUBDIR" [$WINDOWS]
+		$IntermediateDirectory	"Debug_dbg$PLATSUBDIR" [$WINDOWS]
 
 		$OutputDirectory		"Debug_dbg_360"		[$X360]
 		$IntermediateDirectory	"Debug_dbg_360"		[$X360]
@@ -29,8 +29,8 @@ $Configuration	"Release"
 {
 	$General
 	{
-		$OutputDirectory		"Release_dbg" [$WINDOWS]
-		$IntermediateDirectory	"Release_dbg" [$WINDOWS]
+		$OutputDirectory		"Release_dbg$PLATSUBDIR" [$WINDOWS]
+		$IntermediateDirectory	"Release_dbg$PLATSUBDIR" [$WINDOWS]
 
 		$OutputDirectory		"Release_dbg_360"	[$X360]
 		$IntermediateDirectory	"Release_dbg_360"	[$X360]

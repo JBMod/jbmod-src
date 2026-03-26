@@ -1405,7 +1405,9 @@ void CServerGameDLL::LevelShutdown( void )
 	// otherwise we leak them constantly on changelevel in the
 	// particle precache stringtable list.
 	g_pParticleSystemMgr->UncacheAllParticleSystems();
+#ifdef PLATFORM_64BITS // TODO (jbmod/jbmod-src#123): need a fix for win32
 	g_pParticleSystemMgr->RecreateDictionary();
+#endif
 
 	g_nCurrentChapterIndex = -1;
 

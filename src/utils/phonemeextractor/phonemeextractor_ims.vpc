@@ -27,8 +27,8 @@ $Configuration	"Debug"
 {
 	$General
 	{
-		$OutputDirectory			".\Debug_ims"
-		$IntermediateDirectory		".\Debug_ims"
+		$OutputDirectory			".\Debug_ims$PLATSUBDIR"
+		$IntermediateDirectory		".\Debug_ims$PLATSUBDIR"
 	}
 }
 
@@ -36,8 +36,8 @@ $Configuration	"Release"
 {
 	$General
 	{
-		$OutputDirectory			".\Release_ims"
-		$IntermediateDirectory		".\Release_ims"
+		$OutputDirectory			".\Release_ims$PLATSUBDIR"
+		$IntermediateDirectory		".\Release_ims$PLATSUBDIR"
 	}
 }
 
