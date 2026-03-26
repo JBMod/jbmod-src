@@ -31,6 +31,12 @@ jobs:
             arch: x64
           - platform: linux
             arch: x86
+          - platform: linux
+            arch: x64
+            dedicated: true
+          - platform: linux
+            arch: x86
+            dedicated: true
     runs-on: ${{ matrix.platform == 'windows' && 'windows-latest' || 'ubuntu-latest' }}
     container: ${{ matrix.platform == 'linux' && 'registry.gitlab.steamos.cloud/steamrt/sniper/sdk:latest' || '' }}
     steps:
@@ -58,7 +64,7 @@ jobs:
       if: runner.os == 'Linux'
       working-directory: ${{ github.workspace }}/src
       run: |
-        VPC_NINJA_BUILD_MODE=${{env.BUILD_TYPE}} devtools/bin/vpc /${{ matrix.arch == 'x86' && 'linux32' || 'linux64' }} /jbmod /ninja /define:SOURCESDK ${{ env.BUILD_TYPE == 'Retail' && '/define:PUBLISH' || '' }} +everything /mksln _vpc_/ninja/${{ matrix.arch }}
+        VPC_NINJA_BUILD_MODE=${{env.BUILD_TYPE}} devtools/bin/vpc /${{ matrix.arch == 'x86' && 'linux32' || 'linux64' }} /jbmod /ninja /define:SOURCESDK ${{ env.BUILD_TYPE == 'Retail' && '/define:PUBLISH' || '' }} ${{ matrix.dedicated && '/dedicated +dedicated' || '+everything' }} /mksln _vpc_/ninja/${{ matrix.arch }}
         if [ "${{ matrix.arch }}" = "x86" ]; then
           sed -i 's/i386-linux/i686-linux/g' _vpc_/ninja/${{ matrix.arch }}.ninja
         fi
@@ -79,12 +85,14 @@ jobs:
     - name: Build (Linux)
       if: runner.os == 'Linux'
       working-directory: ${{ github.workspace }}/src
-      run: ninja -f "_vpc_/ninja/${{ matrix.arch }}.ninja" -j$(nproc)
+      run: |
+        ninja -f "_vpc_/ninja/${{ matrix.arch }}.ninja" -j$(nproc)
+        rm -f ../game/srcds*
 
     - name: Store artifacts
       uses: actions/upload-artifact@v7
       with:
-        name: game-${{ matrix.platform }}-${{ matrix.arch }}
+        name: game-${{ matrix.platform }}-${{ matrix.arch }}${{ matrix.dedicated && 'srv' || '' }}
         retention-days: 1
         path: |
           game
@@ -94,7 +102,7 @@ jobs:
     - name: Store symbol artifacts
       uses: actions/upload-artifact@v7
       with:
-        name: game-${{ matrix.platform }}-${{ matrix.arch }}-sym
+        name: game-${{ matrix.platform }}-${{ matrix.arch }}${{ matrix.dedicated && 'srv' || '' }}-sym
         retention-days: 1
         path: |
           game/**/*.${{ matrix.platform == 'windows' && 'pdb' || 'dbg' }}
@@ -219,8 +227,10 @@ jobs:
 
               cp -r $art/* dist/$target/
               rm -f dist/$target/srcds*
+              rm -f dist/$target/jbmod/bin/*_srv* dist/$target/jbmod/bin/linux64/*_srv*
               cp -r $art/* dist_srcds/$target/
               rm -f dist_srcds/$target/jbmod_* dist_srcds/$target/jbmod*.exe
+              rm -f dist_srcds/$target/jbmod/bin/client* dist_srcds/$target/jbmod/bin/x64/client* dist_srcds/$target/jbmod/bin/linux64/client*
             fi
           done
 
