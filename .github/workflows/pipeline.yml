@@ -1,0 +1,296 @@
+name: Build & Release
+on:
+  push:
+    branches: [ "master" ]
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build Type'
+        required: true
+        default: 'Release'
+        type: choice
+        options:
+          - Debug
+          - Release
+          - Retail
+
+env:
+  BUILD_TYPE: ${{ github.event.inputs.build_type || 'Release' }}
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows
+            arch: x64
+          - platform: windows
+            arch: x86
+          - platform: linux
+            arch: x64
+          - platform: linux
+            arch: x86
+    runs-on: ${{ matrix.platform == 'windows' && 'windows-latest' || 'ubuntu-latest' }}
+    container: ${{ matrix.platform == 'linux' && 'registry.gitlab.steamos.cloud/steamrt/sniper/sdk:latest' || '' }}
+    steps:
+    - uses: actions/checkout@v6
+    - name: Clean game folder
+      shell: bash
+      run: |
+        rm -rf game/*
+        mkdir -p game/bin/x64
+
+    - name: Add MSBuild to PATH (Windows)
+      if: runner.os == 'Windows'
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Set up registry for VPC (Windows)
+      if: runner.os == 'Windows'
+      run: reg add 'HKLM\SOFTWARE\Microsoft\VisualStudio\10.0\Projects\{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}' /v DefaultProjectExtension /t REG_SZ /d vcproj /f /reg:32
+
+    - name: Create project files (Windows)
+      if: runner.os == 'Windows'
+      working-directory: ${{ github.workspace }}/src
+      run: devtools\bin\vpc.exe /${{ matrix.arch == 'x86' && 'win32' || 'win64' }} /jbmod /define:SOURCESDK ${{ env.BUILD_TYPE == 'Retail' && '/define:PUBLISH' || '' }} +everything +dedicated /mksln ${{ matrix.arch }}.sln
+
+    - name: Create project files (Linux)
+      if: runner.os == 'Linux'
+      working-directory: ${{ github.workspace }}/src
+      run: |
+        VPC_NINJA_BUILD_MODE=${{env.BUILD_TYPE}} devtools/bin/vpc /${{ matrix.arch == 'x86' && 'linux32' || 'linux64' }} /jbmod /ninja /define:SOURCESDK ${{ env.BUILD_TYPE == 'Retail' && '/define:PUBLISH' || '' }} +everything /mksln _vpc_/ninja/${{ matrix.arch }}
+        if [ "${{ matrix.arch }}" = "x86" ]; then
+          sed -i 's/i386-linux/i686-linux/g' _vpc_/ninja/${{ matrix.arch }}.ninja
+        fi
+
+    # TODO: ideally this would be a post-build in VPC scripts, might need better tooling than VPC & Ninja
+    - name: Patch build file (Linux)
+      if: runner.os == 'Linux'
+      working-directory: ${{ github.workspace }}/src
+      run: |
+        sed -i '/rule link_static/irule symbols\n  command = objcopy --only-keep-debug $in $out; strip -S $in; objcopy --add-gnu-debuglink=$out $in\n  description = Extracting symbols $in to $out' _vpc_/ninja/${{ matrix.arch }}.ninja
+        sed -ri '/./{H;$!d} ; x ; s/((build (\.\.\/game.*?):.*)\n(build .*?: phony.*))/\2\nbuild \3.dbg: symbols \3\n\4\3.dbg/g' _vpc_/ninja/${{ matrix.arch }}.ninja
+
+    - name: Build (Windows)
+      if: runner.os == 'Windows'
+      working-directory: ${{ github.workspace }}/src
+      run: msbuild /m /p:Configuration=${{env.BUILD_TYPE}} ${{ matrix.arch }}.sln
+
+    - name: Build (Linux)
+      if: runner.os == 'Linux'
+      working-directory: ${{ github.workspace }}/src
+      run: ninja -f "_vpc_/ninja/${{ matrix.arch }}.ninja" -j$(nproc)
+
+    - name: Store artifacts
+      uses: actions/upload-artifact@v7
+      with:
+        name: game-${{ matrix.platform }}-${{ matrix.arch }}
+        retention-days: 1
+        path: |
+          game
+          !game/**/*.${{ matrix.platform == 'windows' && 'pdb' || 'dbg' }}
+
+    # TODO: upload directly to S3, need an action that runs on windows too
+    - name: Store symbol artifacts
+      uses: actions/upload-artifact@v7
+      with:
+        name: game-${{ matrix.platform }}-${{ matrix.arch }}-sym
+        retention-days: 1
+        path: |
+          game/**/*.${{ matrix.platform == 'windows' && 'pdb' || 'dbg' }}
+
+  package:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      # TODO: make this sparse since we're running out of storage
+
+      - name: Checkout build tools
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: jbmod/build-tools
+          latest: true
+          fileName: build-tools.zip
+
+      - name: Checkout engine
+        uses: actions/checkout@v6
+        with:
+          repository: jbmod/enginecontent
+          token: ${{ secrets.CONTENT_REPO_TOKEN }}
+          path: engine
+
+      - name: Checkout content
+        uses: actions/checkout@v6
+        with:
+          repository: jbmod/valvecontent
+          token: ${{ secrets.CONTENT_REPO_TOKEN }}
+          path: valve
+
+      - name: Fetch DLC content
+        run: |
+          wget -nv -O valvedlc.zip ${{ secrets.VALVE_DLC_URL }}
+          unzip -q valvedlc.zip -d valvedlc
+
+      - name: Fetch all artifacts
+        uses: actions/download-artifact@v7
+        with:
+          path: artifacts
+
+      - name: Setup engine tools path
+        run: |
+          if [ -d "engine/linux/bin/linux64" ]; then
+            echo "$(pwd)/engine/linux/bin/linux64" >> $GITHUB_PATH
+          fi
+
+      - name: Setup build tools path
+        run: |
+          unzip build-tools.zip -d build-tools
+          if [ -d "build-tools" ]; then
+            echo "$(pwd)/build-tools" >> $GITHUB_PATH
+          fi
+
+      - name: Setup signing keys
+        run: |
+          if [ "${{ env.BUILD_TYPE }}" = "Retail" ]; then
+            echo "${{ secrets.VPK_PRIVATE_KEY_RETAIL }}" > privatekey.vdf
+            echo "${{ secrets.VPK_PUBLIC_KEY_RETAIL }}" > publickey.vdf
+          else
+            echo "${{ secrets.VPK_PRIVATE_KEY }}" > privatekey.vdf
+            echo "${{ secrets.VPK_PUBLIC_KEY }}" > publickey.vdf
+          fi
+
+      # TODO: Need to cache the vpk too for incrementals
+      - name: Cache control files
+        uses: actions/cache@v4
+        with:
+          path: pak01.vdf.bak
+          key: vpk-control-${{ github.sha }}
+          restore-keys: |
+            vpk-control-
+
+      # TODO: Split VPKs to reduce srcds size
+      - name: Create VPKs
+        env:
+          LD_LIBRARY_PATH: ${{ github.workspace }}/engine/linux/bin/linux64:$LD_LIBRARY_PATH
+        run: |
+          cp -r valve/game/jbmod game/jbmod_base
+          cp -r game/jbmod/* game/jbmod_base/
+          vpk-ctrl -b game/jbmod_base game/jbmod_base/* !game/jbmod_base/gameinfo.txt !game/jbmod_base/steam.inf game/jbmod_base/cfg !game/jbmod_base/cfg/*_example.txt !game/jbmod_base/cfg/settings.scr game/jbmod_base/maps !game/jbmod_base/maps/*.bsp game/jbmod_base/materials game/jbmod_base/media game/jbmod_base/models game/jbmod_base/resource !game/jbmod_base/resource/*.ico !game/jbmod_base/resource/*.ttf game/jbmod_base/scripts game/jbmod_base/servers game/jbmod_base/sound > pak01.vdf
+          vpk -M -P -K privatekey.vdf -k publickey.vdf k game/jbmod_base/jbmod_pak pak01.vdf
+          cp pak01.vdf pak01.vdf.bak
+          vpk-cleaner -c pak01.vdf game/jbmod_base game/jbmod_clean
+
+      - name: Organize content for Steam
+        run: |
+          mkdir -p dist/content_base/jbmod
+          mkdir -p dist/content_win
+          mkdir -p dist/content_lin
+          cp -r engine/shared/* dist/content_base/
+          cp -r engine/linux/* dist/content_lin/
+          cp -r engine/windows/* dist/content_win/
+          cp -r valvedlc/game/* dist/content_base/
+          cp -r game/jbmod_clean/* dist/content_base/jbmod/
+
+          mkdir -p dist_srcds/content_base/jbmod
+          mkdir -p dist_srcds/content_win
+          mkdir -p dist_srcds/content_lin
+          cp -r engine/shared_dedicated/* dist_srcds/content_base/
+          cp -r engine/linux_dedicated/* dist_srcds/content_lin/
+          cp -r engine/windows_dedicated/* dist_srcds/content_win/
+          cp -r valvedlc/dedicated/* dist_srcds/content_base/
+          cp -r game/jbmod_clean/* dist_srcds/content_base/jbmod/
+
+          rm -rf engine valve valvedlc game
+
+          for art in artifacts/game-*; do
+            if [ -d "$art" ]; then
+              if [[ "$art" == *"-sym" ]] && [[ "${{ env.BUILD_TYPE }}" != "Debug" ]]; then
+                continue
+              fi
+              if [[ "$art" == *"windows"* ]]; then
+                target="content_win"
+              elif [[ "$art" == *"linux"* ]]; then
+                target="content_lin"
+              else
+                continue
+              fi
+
+              cp -r $art/* dist/$target/
+              rm -f dist/$target/srcds*
+              cp -r $art/* dist_srcds/$target/
+              rm -f dist_srcds/$target/jbmod_* dist_srcds/$target/jbmod*.exe
+            fi
+          done
+
+          rm -rf artifacts
+
+      - name: Deploy game to Steam
+        uses: game-ci/steam-deploy@v3
+        with:
+          username: ${{ secrets.STEAM_USERNAME }}
+          configVdf: ${{ secrets.STEAM_CONFIG_VDF }}
+          appId: 2158860
+          buildDescription: "v${{ github.run_number }} (${{ github.sha }})"
+          rootPath: dist
+          releaseBranch: ${{ env.BUILD_TYPE == 'Debug' && 'devel' || (env.BUILD_TYPE == 'Release' && 'github' || '') }}
+          depot1Path: content_base
+          depot2Path: content_win
+          depot3Path: content_lin
+
+      - name: Clean Steamcmd output
+        run: sudo rm -rf BuildOutput
+
+      - name: Deploy dedicated to Steam
+        uses: game-ci/steam-deploy@v3
+        with:
+          username: ${{ secrets.STEAM_USERNAME }}
+          configVdf: ${{ secrets.STEAM_CONFIG_VDF }}
+          appId: 2181210
+          buildDescription: "v${{ github.run_number }} (${{ github.sha }})"
+          rootPath: dist_srcds
+          releaseBranch: ${{ env.BUILD_TYPE == 'Debug' && 'devel' || (env.BUILD_TYPE == 'Release' && 'github' || '') }}
+          depot1Path: content_base
+          depot2Path: content_win
+          depot3Path: content_lin
+
+      # TODO: Update master server from steam.inf?
+      # Or maybe not since main release is still manual
+
+  upload-symbols:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Download symbol artifacts
+      uses: actions/download-artifact@v7
+      with:
+        path: symbols
+        pattern: game-*-sym
+        merge-multiple: true
+
+    - name: Store symbols
+      uses: jakejarvis/s3-sync-action@master
+      env:
+        AWS_S3_ENDPOINT: ${{ secrets.AWS_S3_ENDPOINT }}
+        AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        SOURCE_DIR: symbols
+        DEST_DIR: ${{ github.ref }}/${{ github.sha }}
+
+    - name: Index symbols
+      env:
+        SYMBOL_SERVER_SECRET: ${{ secrets.SYMBOL_SERVER_SECRET }}
+        S3_SYMBOL_PATH: ${{ github.ref }}/${{ github.sha }}
+      run: |
+        sudo apt-get update && sudo apt-get install -y llvm
+        python3 .github/tools/index_symbols.py symbols
+
+    - name: Clean up symbol artifacts
+      uses: geekyeggo/delete-artifact@v5
+      with:
+          name: game-*-sym
+          failOnError: false
