@@ -19,6 +19,7 @@ env:
 
 jobs:
   build:
+    if: github.repository_owner == 'JBMod'
     strategy:
       fail-fast: false
       matrix:
