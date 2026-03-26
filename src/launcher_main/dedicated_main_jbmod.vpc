@@ -1,7 +1,7 @@
 $Macro OUTBINNAME "srcds"
 
 $Conditional "MOD_LAUNCHER" "1"
-$Conditional "DEDICATED" "1"
+$Conditional "DED_LAUNCHER" "1"
 
 $Include "launcher_main.vpc"
 

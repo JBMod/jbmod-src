@@ -36,7 +36,7 @@ typedef int (*LauncherMain_t)( int argc, char **argv );
 #error
 #endif
 
-#ifndef DEDICATED
+#ifndef DED_LAUNCHER
 #ifdef WIN32
 // hinting the nvidia driver to use the dedicated graphics card in an optimus configuration
 // for more info, see: http://developer.download.nvidia.com/devzone/devcenter/gamegraphics/files/OptimusRenderingPolicies.pdf
@@ -224,7 +224,7 @@ static bool GetGameInstallDir( const char *pRootDir, char *pszBuf, int nBufSize 
 		unLength = pSteamApps->GetAppInstallDir( k_unMyModAppid, pszBuf, nBufSize );
 	}
 
-#ifndef DEDICATED
+#ifndef DED_LAUNCHER
 	UnloadSteam();
 #endif
 
@@ -462,7 +462,7 @@ int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 
 	SetEnvironmentVariableA( "SDK_EXEC_DIR", szGameInstallDir );
 
-#ifdef DEDICATED
+#ifdef DED_LAUNCHER
 #define LAUNCHER_PROCNAME	"DedicatedMain"
 #define LAUNCHER_DLL_PATH	"%s\\" PLATFORM_BIN_DIR "\\dedicated.dll"
 #else
