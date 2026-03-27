@@ -1,0 +1,54 @@
+vscript_convar_allowlist
+{
+    // This is the list of convars that are allowed to be set
+    // by the Convars in VScript.
+    //
+    // Any convars changed by a map's vscripts will be reset when the
+    // map changes to another.
+  
+    // Physics & Movement
+    sv_infinite_aux_power                                             allowed
+    sv_gravity                                                        allowed
+    sv_maxspeed                                                       allowed
+    sv_airaccelerate                                                  allowed
+    sv_accelerate                                                     allowed
+    sv_friction                                                       allowed
+    sv_stopspeed                                                      allowed
+    sv_rollangle                                                      allowed
+    sv_rollspeed                                                      allowed
+    sv_stepsize                                                       allowed
+    sv_wateraccelerate                                                allowed
+    sv_waterfriction                                                  allowed
+    sv_turbophysics                                                   allowed
+    sv_client_predict                                                 allowed
+    
+    // Multiplayer Settings
+    mp_teamplay                                                       allowed
+    mp_timelimit                                                      allowed
+    mp_fraglimit                                                      allowed
+    mp_flashlight                                                     allowed
+    mp_footsteps                                                      allowed
+    mp_falldamage                                                     allowed
+    mp_weaponstay                                                     allowed
+    mp_forcerespawn                                                   allowed
+	mp_friendlyfire                                                   allowed
+    
+    // Physics Props
+    phys_pushscale                                                    allowed
+    phys_timescale                                                    allowed
+    phys_impactforcescale                                             allowed
+    
+    // Spectator
+    spec_freeze_time                                                  allowed
+    spec_freeze_traveltime                                            allowed
+    
+    // Entities
+    func_break_max_pieces                                             allowed
+    func_break_reduction_factor                                       allowed
+    func_breakdmg_bullet                                              allowed
+    func_breakdmg_club                                                allowed
+    func_breakdmg_explosive                                           allowed
+    
+    // Other
+    sv_alltalk                                                        allowed
+}

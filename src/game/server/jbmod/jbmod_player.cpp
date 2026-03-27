@@ -27,6 +27,7 @@
 #include "SoundEmitterSystem/isoundemittersystembase.h"
 
 #include "ilagcompensationmanager.h"
+#include "vscript_server.h"
 
 int g_iLastCitizenModel = 0;
 int g_iLastCombineModel = 0;
@@ -101,7 +102,10 @@ END_SEND_TABLE()
 BEGIN_DATADESC( CJBMod_Player )
 END_DATADESC()
 
-BEGIN_ENT_SCRIPTDESC( CJBMod_Player, CHL2_Player, "Half-Life 2: Deathmatch Player" )
+BEGIN_ENT_SCRIPTDESC( CJBMod_Player, CHL2_Player, "JBMod Player" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptEquipSuit, "EquipSuit", "Give the player the HEV suit." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGiveItem, "GiveItem", "Give the player a specific item by classname." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGiveAmmo, "GiveAmmo", "Give the player a specific amount of ammo (count, ammoName)." )
 END_SCRIPTDESC();
 
 const char *g_ppszRandomCitizenModels[] = 
@@ -345,8 +349,11 @@ void CJBMod_Player::Spawn(void)
 		RemoveSolidFlags( FSOLID_NOT_SOLID );
 
 		RemoveEffects( EF_NODRAW );
-		
-		GiveDefaultItems();
+
+		if ( CallScriptOnPlayerSpawn() == false )
+		{
+			GiveDefaultItems();
+		}
 	}
 
 	SetNumAnimOverlays( 3 );
@@ -1542,6 +1549,21 @@ bool CJBMod_Player::IsReady()
 void CJBMod_Player::SetReady( bool bReady )
 {
 	m_bReady = bReady;
+}
+
+bool CJBMod_Player::CallScriptOnPlayerSpawn( void )
+{
+	if ( g_pScriptVM == NULL )
+		return false;
+
+	HSCRIPT hFunction = g_pScriptVM->LookupFunction( "OnPlayerSpawn" );
+	if ( hFunction )
+	{
+		g_pScriptVM->Call( hFunction, NULL, true, NULL, GetScriptInstance() );
+		g_pScriptVM->ReleaseFunction( hFunction );
+		return true;
+	}
+	return false;
 }
 
 void CJBMod_Player::CheckChatText( char *p, int bufsize )

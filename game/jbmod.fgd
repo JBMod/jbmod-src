@@ -1,0 +1,22 @@
+//-------------------------------------------------------------------------
+//
+// Game data for JBMod.
+//
+//-------------------------------------------------------------------------
+
+@include "halflife2.fgd"
+
+@PointClass base(Targetname) iconsprite("editor/vcommand.vmt") = jbmod_logic_gamemode : 
+	"A bridge entity that sets the active JBMod game mode and runs the corresponding mode script."
+[
+	gamemode(string) : "Game Mode Name" : "" : "The name of the game mode (e.g. 'sandbox'). This will automatically load 'scripts/vscripts/gamemodes/<name>.nut'."
+
+	spawnflags(flags) =
+	[
+		1: "Start Disabled" : 0
+	]
+
+	input Enable(void) : "Apply the game mode settings and run the mode script."
+]
+
+

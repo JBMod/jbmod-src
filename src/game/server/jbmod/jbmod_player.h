@@ -104,7 +104,13 @@ public:
 	float GetNextTeamChangeTime( void ) { return m_flNextTeamChangeTime; }
 	void  PickDefaultSpawnTeam( void );
 	void  SetupPlayerSoundsByModel( const char *pModelName );
+	bool  CallScriptOnPlayerSpawn( void );
 	const char *GetPlayerModelSoundPrefix( void );
+
+	void ScriptEquipSuit( void ) { EquipSuit(); }
+	HSCRIPT ScriptGiveItem( const char *szItem ) { return ToHScript( GiveNamedItem( szItem ) ); }
+	void ScriptGiveAmmo( int nCount, const char *szAmmoName ) { CBasePlayer::GiveAmmo( nCount, szAmmoName ); }
+
 	int	  GetPlayerModelType( void ) { return m_iPlayerSoundType;	}
 
 	int	GetMaxAmmo( int iAmmoIndex ) const;

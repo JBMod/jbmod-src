@@ -204,6 +204,9 @@ CJBModRules::CJBModRules()
 	m_bAwaitingReadyRestart = false;
 	m_bChangelevelDone = false;
 
+	m_szGameMode[0] = 0;
+	m_szCustomGameDescription[0] = 0;
+
 #endif
 }
 
@@ -835,10 +838,12 @@ int CJBModRules::PlayerRelationship( CBaseEntity *pPlayer, CBaseEntity *pTarget 
 
 const char *CJBModRules::GetGameDescription( void )
 { 
-	if ( IsTeamplay() )
-		return "Team Deathmatch"; 
+#ifndef CLIENT_DLL
+	if ( m_szCustomGameDescription[0] )
+		return m_szCustomGameDescription;
+#endif
 
-	return "Deathmatch"; 
+	return "JBMod";
 } 
 
 bool CJBModRules::IsConnectedUserInfoChangeAllowed( CBasePlayer *pPlayer )
@@ -1284,6 +1289,42 @@ const char *CJBModRules::GetChatFormat( bool bTeamOnly, CBasePlayer *pPlayer )
 	}
 
 	return pszFormat;
+}
+
+//-----------------------------------------------------------------------------
+// VScript Registration
+//-----------------------------------------------------------------------------
+static void ScriptSetGameDescription( const char *pszDesc )
+{
+	if ( JBModRules() && pszDesc )
+	{
+		Q_strncpy( JBModRules()->m_szCustomGameDescription, pszDesc, sizeof( JBModRules()->m_szCustomGameDescription ) );
+	}
+}
+
+static const char *ScriptGetGameDescription()
+{
+	if ( JBModRules() )
+	{
+		return JBModRules()->GetGameDescription();
+	}
+	return "";
+}
+
+static const char *ScriptGetGameMode()
+{
+	if ( JBModRules() )
+	{
+		return JBModRules()->m_szGameMode;
+	}
+	return "";
+}
+
+void CJBModRules::RegisterScriptFunctions()
+{
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptSetGameDescription, "SetGameDescription", "Set the game description." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptGetGameDescription, "GetGameDescription", "Get the current game description." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptGetGameMode, "GetGameMode", "Get the current game mode name." );
 }
 
 #endif
