@@ -1,0 +1,7 @@
+"WorldVertexTransition"
+{
+	"$basetexture" "JBTex/grassfloor01"
+	"$basetexture2" "nature/sandfloor010a"
+//	"%detailtype" "prodgrasses"
+	"$surfaceprop" "dirt"
+}

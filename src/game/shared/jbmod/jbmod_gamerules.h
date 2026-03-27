@@ -136,6 +136,7 @@ public:
 	void    CheckChatForReadySignal( CJBMod_Player *pPlayer, const char *chatmsg );
 	const char *GetChatFormat( bool bTeamOnly, CBasePlayer *pPlayer );
 
+	virtual void RegisterScriptFunctions();
 #endif
 
 	bool IsOfficialMap( void );
@@ -153,6 +154,9 @@ public:
 
 	virtual bool IsConnectedUserInfoChangeAllowed( CBasePlayer *pPlayer );
 	
+	char m_szGameMode[64];
+	char m_szCustomGameDescription[128];
+
 private:
 	
 	CNetworkVar( bool, m_bTeamPlayEnabled );

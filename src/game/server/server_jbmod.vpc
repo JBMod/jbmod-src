@@ -384,6 +384,8 @@ $Project "Server (JBMod)"
 					$File "jbmod\bot\map_entities\jbmod_bot_generator.h"
 					$File "jbmod\bot\map_entities\jbmod_bot_proxy.cpp"
 					$File "jbmod\bot\map_entities\jbmod_bot_proxy.h"
+					$File "jbmod\jbmod_logic_gamemode.cpp"
+					$File "jbmod\jbmod_logic_gamemode.h"
 				}
 			}
 			
