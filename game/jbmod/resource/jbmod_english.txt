@@ -1,8 +1,8 @@
-"lang" 
-{ 
-"Language" "English" 
-"Tokens" 
-{ 
+"lang"
+{
+"Language" "English"
+"Tokens"
+{
 "jbmod_Keyboard_Title"		"JBMOD"
 "jbmod_KB_Phys_Switch"		"Switch physgun modes"
 "jbmod_KB_Cann_Activate"	"Activate cannisters"
@@ -66,7 +66,9 @@
 "HL2MP_Chat_All"			"%s1 :  %s2"
 "HL2MP_Chat_AllDead"		"*DEAD* %s1 :  %s2"
 "HL2MP_Chat_AllSpec"		"*SPEC* %s1 :  %s2"
+"JBMod_Chat_All"			"%s1 :  %s2"
+"JBMod_Chat_AllDead"		"*DEAD* %s1 :  %s2"
 "HL2MP_Name_Change"		"* %s1 changed name to %s2"
 
-} 
+}
 }
