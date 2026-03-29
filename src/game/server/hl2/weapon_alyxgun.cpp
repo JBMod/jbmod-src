@@ -122,7 +122,17 @@ void CWeaponAlyxGun::Precache( void )
 //-----------------------------------------------------------------------------
 void CWeaponAlyxGun::Equip( CBaseCombatCharacter *pOwner )
 {
-	BaseClass::Equip( pOwner );
+	if (pOwner && pOwner->IsPlayer())
+	{
+		Warning("You are using the wrong weapon dummy! Remove this and use the correct one!\n");
+		Warning("type this instead: give weapon_alyxgun_p\n");
+
+		pOwner->Weapon_Drop(this);
+		UTIL_Remove(this);
+		return;
+	}
+
+	BaseClass::Equip(pOwner);
 }
 
 //-----------------------------------------------------------------------------
