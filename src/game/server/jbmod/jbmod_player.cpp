@@ -47,13 +47,13 @@ LINK_ENTITY_TO_CLASS( player, CJBMod_Player );
 LINK_ENTITY_TO_CLASS( info_player_combine, CPointEntity );
 LINK_ENTITY_TO_CLASS( info_player_rebel, CPointEntity );
 
-//CSS spawn entities
-LINK_ENTITY_TO_CLASS(info_player_terrorist, CPointEntity);
-LINK_ENTITY_TO_CLASS(info_player_counterterrorist, CPointEntity);
+// CSS spawn entities
+LINK_ENTITY_TO_CLASS( info_player_terrorist, CPointEntity );
+LINK_ENTITY_TO_CLASS( info_player_counterterrorist, CPointEntity );
 
-//DOD spawn entities
-LINK_ENTITY_TO_CLASS(info_player_allies, CPointEntity);
-LINK_ENTITY_TO_CLASS(info_player_axis, CPointEntity);
+// DOD spawn entities
+LINK_ENTITY_TO_CLASS( info_player_allies, CPointEntity );
+LINK_ENTITY_TO_CLASS( info_player_axis, CPointEntity );
 
 // specific to the local player
 BEGIN_SEND_TABLE_NOBASE( CJBMod_Player, DT_JBModLocalPlayerExclusive )
@@ -1482,40 +1482,40 @@ CBaseEntity* CJBMod_Player::EntSelectSpawnPoint( void )
 
 	// Incredibly terrible garbage way of getting CSS and DOD spawnpoints to work.
 	// These aren't set up for teamplay so it'll just plop you at a random spawn.
-	// Stops you from spawning in the ceiling on cs_office, at least.
+	// Stops the game from immediately crashing on CSS maps.
 	// -nocaps 29.3.26
 
-	//cstrike spawns
-	if (!pSpot)
+	// cstrike spawns
+	if ( !pSpot )
 	{
-		pSpot = gEntList.FindEntityByClassname(pSpot, "info_player_counterterrorist");
+		pSpot = gEntList.FindEntityByClassname( pSpot, "info_player_counterterrorist" );
 
-		if (pSpot)
+		if ( pSpot )
 			goto ReturnSpot;
 	}
 
-	if (!pSpot)
+	if ( !pSpot )
 	{
-		pSpot = gEntList.FindEntityByClassname(pSpot, "info_player_terrorist");
+		pSpot = gEntList.FindEntityByClassname( pSpot, "info_player_terrorist" );
 
-		if (pSpot)
+		if ( pSpot )
 			goto ReturnSpot;
 	}
 
 	// day of defeat spawns
-	if (!pSpot)
+	if ( !pSpot )
 	{
-		pSpot = gEntList.FindEntityByClassname(pSpot, "info_player_allies");
+		pSpot = gEntList.FindEntityByClassname( pSpot, "info_player_allies" );
 
-		if (pSpot)
+		if ( pSpot )
 			goto ReturnSpot;
 	}
 
-	if (!pSpot)
+	if ( !pSpot )
 	{
-		pSpot = gEntList.FindEntityByClassname(pSpot, "info_player_axis");
+		pSpot = gEntList.FindEntityByClassname( pSpot, "info_player_axis" );
 
-		if (pSpot)
+		if ( pSpot )
 			goto ReturnSpot;
 	}
 
