@@ -1,6 +1,7 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose: Alyx Gun for the player
+// //TODO: Burst fire with secondary attack (couldnt get it to work)
 //
 //=============================================================================//
 
