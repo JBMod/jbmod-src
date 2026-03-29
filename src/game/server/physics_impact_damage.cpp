@@ -339,7 +339,7 @@ float CalculatePhysicsImpactDamage( int index, gamevcollisionevent_t *pEvent, co
 		CBasePlayer* pPlayer = NULL;
 		if ( gpGlobals->maxClients == 1 )
 		{
-			CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
+			pPlayer = UTIL_GetLocalPlayer();
 		}
 		else {
 			for ( int i = 1; i <= gpGlobals->maxClients; i++ )
@@ -455,7 +455,7 @@ float CalculatePhysicsImpactDamage( int index, gamevcollisionevent_t *pEvent, co
 		CBasePlayer *pPlayer = NULL;
 		if ( gpGlobals->maxClients == 1 )
 		{
-			CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
+			pPlayer = UTIL_GetLocalPlayer();
 		} else {
 			for (int i = 1; i <= gpGlobals->maxClients; i++)
 			{
