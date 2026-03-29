@@ -7,6 +7,9 @@ on:
 
 jobs:
   windows:
+    strategy:
+      matrix:
+        arch: ['x64', 'x86']
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v6
@@ -19,13 +22,16 @@ jobs:
 
     - name: Create project files
       working-directory: ${{ github.workspace }}/src
-      run: devtools\bin\vpc.exe /win64 /jbmod /define:SOURCESDK +everything /mksln x64.sln
+      run: devtools\bin\vpc.exe /${{ matrix.arch == 'x86' && 'win32' || 'win64' }} /jbmod /define:SOURCESDK +everything /mksln ${{ matrix.arch }}.sln
 
     - name: Build
       working-directory: ${{ github.workspace }}/src
-      run: msbuild /m /p:Configuration=Release x64.sln
+      run: msbuild /m /p:Configuration=Release ${{ matrix.arch }}.sln
 
   linux:
+    strategy:
+      matrix:
+        arch: ['x64', 'x86']
     runs-on: ubuntu-latest
     container: registry.gitlab.steamos.cloud/steamrt/sniper/sdk:latest
     steps:
@@ -33,8 +39,12 @@ jobs:
 
     - name: Create project files
       working-directory: ${{ github.workspace }}/src
-      run: VPC_NINJA_BUILD_MODE=Release devtools/bin/vpc /linux64 /jbmod /ninja /define:SOURCESDK +everything /mksln _vpc_/ninja/x64
+      run: |
+        VPC_NINJA_BUILD_MODE=Release devtools/bin/vpc /${{ matrix.arch == 'x86' && 'linux32' || 'linux64' }} /jbmod /ninja /define:SOURCESDK +everything /mksln _vpc_/ninja/${{ matrix.arch }}
+        if [ "${{ matrix.arch }}" = "x86" ]; then
+          sed -i 's/i386-linux/i686-linux/g' _vpc_/ninja/${{ matrix.arch }}.ninja
+        fi
 
     - name: Build
       working-directory: ${{ github.workspace }}/src
-      run: ninja -f "_vpc_/ninja/x64.ninja" -j$(nproc)
+      run: ninja -f "_vpc_/ninja/${{ matrix.arch }}.ninja" -j$(nproc)
