@@ -1503,7 +1503,6 @@ CBaseEntity* CJBMod_Player::EntSelectSpawnPoint( void )
 	}
 
 	// day of defeat spawns
-
 	if (!pSpot)
 	{
 		pSpot = gEntList.FindEntityByClassname(pSpot, "info_player_allies");
