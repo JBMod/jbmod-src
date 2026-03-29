@@ -199,7 +199,7 @@ ConVar  player_debug_print_damage( "player_debug_print_damage", "0", FCVAR_CHEAT
 
 void CC_GiveCurrentAmmo( void )
 {
-	CBasePlayer *pPlayer = UTIL_PlayerByIndex(1);
+	CBasePlayer *pPlayer = UTIL_GetCommandClient();
 
 	if( pPlayer )
 	{
@@ -747,22 +747,31 @@ int CBasePlayer::ShouldTransmit( const CCheckTransmitInfo *pInfo )
 }
 
 
-bool CBasePlayer::WantsLagCompensationOnEntity( const CBasePlayer *pPlayer, const CUserCmd *pCmd, const CBitVec<MAX_EDICTS> *pEntityTransmitBits ) const
+bool CBasePlayer::WantsLagCompensationOnEntity( const CBaseEntity *pEntity, const CUserCmd *pCmd, const CBitVec<MAX_EDICTS> *pEntityTransmitBits ) const
 {
-	// Team members shouldn't be adjusted unless friendly fire is on.
-	if ( !friendlyfire.GetInt() && pPlayer->GetTeamNumber() == GetTeamNumber() )
-		return false;
+	if ( gpGlobals->teamplay )
+	{
+		// Team members shouldn't be adjusted unless friendly fire is on.
+		if ( !friendlyfire.GetInt() && pEntity->GetTeamNumber() == GetTeamNumber() )
+			return false;
+	}
 
 	// If this entity hasn't been transmitted to us and acked, then don't bother lag compensating it.
-	if ( pEntityTransmitBits && !pEntityTransmitBits->Get( pPlayer->entindex() ) )
+	if ( pEntityTransmitBits && !pEntityTransmitBits->Get( pEntity->entindex() ) )
 		return false;
 
 	const Vector &vMyOrigin = GetAbsOrigin();
-	const Vector &vHisOrigin = pPlayer->GetAbsOrigin();
+	const Vector &vHisOrigin = pEntity->GetAbsOrigin();
 
 	// get max distance player could have moved within max lag compensation time, 
 	// multiply by 1.5 to to avoid "dead zones"  (sqrt(2) would be the exact value)
-	float maxDistance = 1.5 * pPlayer->MaxSpeed() * sv_maxunlag.GetFloat();
+	float maxspeed; 
+	CBasePlayer *pPlayer = ToBasePlayer((CBaseEntity*)pEntity); 
+	if ( pPlayer ) 
+		maxspeed = pPlayer->MaxSpeed(); 
+	else 
+		maxspeed = 600; 
+	float maxDistance = 1.5 * maxspeed * sv_maxunlag.GetFloat(); 
 
 	// If the player is within this distance, lag compensate them in case they're running past us.
 	if ( vHisOrigin.DistTo( vMyOrigin ) < maxDistance )
@@ -2639,6 +2648,12 @@ void CBasePlayer::JumptoPosition(const Vector &origin, const QAngle &angles)
 
 bool CBasePlayer::SetObserverTarget(CBaseEntity *target)
 {
+	if ( target == NULL )
+	{
+		m_hObserverTarget.Set( NULL );
+		return true;
+	}
+
 	if ( !IsValidObserverTarget( target ) )
 		return false;
 	
@@ -2679,42 +2694,42 @@ bool CBasePlayer::IsValidObserverTarget(CBaseEntity * target)
 
 	// MOD AUTHORS: Add checks on target here or in derived method
 
-	if ( !target->IsPlayer() )	// only track players
-		return false;
-
-	CBasePlayer * player = ToBasePlayer( target );
-
-	/* Don't spec observers or players who haven't picked a class yet
- 	if ( player->IsObserver() )
-		return false;	*/
-
-	if( player == this )
-		return false; // We can't observe ourselves.
-
-	if ( player->IsEffectActive( EF_NODRAW ) ) // don't watch invisible players
-		return false;
-
-	if ( player->m_lifeState == LIFE_RESPAWNABLE ) // target is dead, waiting for respawn
-		return false;
-
-	if ( player->m_lifeState == LIFE_DEAD || player->m_lifeState == LIFE_DYING )
+	if ( target->IsPlayer() )
 	{
-		if ( (player->m_flDeathTime + DEATH_ANIMATION_TIME ) < gpGlobals->curtime )
+		CBasePlayer * player = ToBasePlayer( target );
+
+		/* Don't spec observers or players who haven't picked a class yet
+ 		if ( player->IsObserver() )
+			return false;	*/
+
+		if( player == this )
+			return false; // We can't observe ourselves.
+
+		if ( player->IsEffectActive( EF_NODRAW ) ) // don't watch invisible players
+			return false;
+
+		if ( player->m_lifeState == LIFE_RESPAWNABLE ) // target is dead, waiting for respawn
+			return false;
+
+		if ( player->m_lifeState == LIFE_DEAD || player->m_lifeState == LIFE_DYING )
 		{
-			return false;	// allow watching until 3 seconds after death to see death animation
+			if ( (player->m_flDeathTime + DEATH_ANIMATION_TIME ) < gpGlobals->curtime )
+			{
+				return false;	// allow watching until 3 seconds after death to see death animation
+			}
 		}
-	}
 		
-	// check forcecamera settings for active players
-	if ( GetTeamNumber() != TEAM_SPECTATOR )
-	{
-		switch ( mp_forcecamera.GetInt() )	
+		// check forcecamera settings for active players
+		if ( GetTeamNumber() != TEAM_SPECTATOR )
 		{
-			case OBS_ALLOW_ALL	:	break;
-			case OBS_ALLOW_TEAM :	if ( GetTeamNumber() != target->GetTeamNumber() )
-										 return false;
-									break;
-			case OBS_ALLOW_NONE :	return false;
+			switch ( mp_forcecamera.GetInt() )	
+			{
+				case OBS_ALLOW_ALL	:	break;
+				case OBS_ALLOW_TEAM :	if ( GetTeamNumber() != target->GetTeamNumber() )
+											 return false;
+										break;
+				case OBS_ALLOW_NONE :	return false;
+			}
 		}
 	}
 	
@@ -2841,6 +2856,8 @@ bool CBasePlayer::CanPickupObject( CBaseEntity *pObject, float massLimit, float 
 		}
 		if ( pList[i]->GetGameFlags() & FVPHYSICS_NO_PLAYER_PICKUP )
 			return false;
+		if ( pList[i]->GetGameFlags() & FVPHYSICS_PLAYER_HELD )
+			return false;
 		if ( pList[i]->IsHinged() )
 			return false;
 	}
@@ -2888,6 +2905,11 @@ bool CBasePlayer::CanPickupObject( CBaseEntity *pObject, float massLimit, float 
 float CBasePlayer::GetHeldObjectMass( IPhysicsObject *pHeldObject )
 {
 	return 0;
+}
+
+CBaseEntity	*CBasePlayer::GetHeldObject(void)
+{
+	return NULL;
 }
 
 
@@ -5579,10 +5601,12 @@ bool CBasePlayer::GetInVehicle( IServerVehicle *pVehicle, int nRole )
 		m_Local.m_iHideHUD |= HIDEHUD_INVEHICLE;
 	}
 
+#ifndef JBMOD
 	if ( !pVehicle->IsPassengerVisible( nRole ) )
 	{
 		AddEffects( EF_NODRAW );
 	}
+#endif
 
 	// Put us in the vehicle
 	pVehicle->SetPassenger( nRole, this );
@@ -5986,6 +6010,9 @@ CBaseEntity *FindPickerEntityClass( CBasePlayer *pPlayer, char *classname )
 CBaseEntity *FindPickerEntity( CBasePlayer *pPlayer )
 {
 	MDLCACHE_CRITICAL_SECTION();
+
+	if ( pPlayer == NULL )
+		return NULL;
 
 	// First try to trace a hull to an entity
 	CBaseEntity *pEntity = FindEntityForward( pPlayer, true );
@@ -6486,6 +6513,8 @@ void CBasePlayer::CheatImpulseCommands( int iImpulse )
 		pEntity = FindEntityForward( this, true );
 		if ( pEntity )
 		{
+			if ( pEntity->IsPlayer() )
+				break;
 			UTIL_Remove( pEntity );
 //			if ( pEntity->m_takedamage )
 //				pEntity->SetThink(SUB_Remove);

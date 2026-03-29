@@ -59,7 +59,7 @@ void CHudVoiceSelfStatus::ApplySchemeSettings(vgui::IScheme *pScheme)
 {
 	BaseClass::ApplySchemeSettings( pScheme );
 
-#ifdef HL2MP
+#if defined( HL2MP ) || defined( JBMOD )
 	SetBgColor( Color( 0, 0, 0, 0 ) );
 #endif
 }
@@ -101,6 +101,8 @@ public:
 	virtual void Paint();
 	virtual void VidInit();
 	virtual void Init();
+	virtual void LevelInit();
+	virtual void LevelShutdown();
 	virtual void OnThink();
 	virtual void ApplySchemeSettings(vgui::IScheme *pScheme);
 
@@ -188,12 +190,21 @@ void CHudVoiceStatus::ApplySchemeSettings(vgui::IScheme *pScheme)
 {
 	BaseClass::ApplySchemeSettings( pScheme );
 
-#ifdef HL2MP
+#if defined( HL2MP ) || defined( JBMOD )
 	SetBgColor( Color( 0, 0, 0, 0 ) );
 #endif
 }
 
 void CHudVoiceStatus::Init( void )
+{
+	ClearActiveList();
+}
+
+void CHudVoiceStatus::LevelInit(void)
+{
+	ClearActiveList();
+}
+void CHudVoiceStatus::LevelShutdown(void)
 {
 	ClearActiveList();
 }

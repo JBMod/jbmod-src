@@ -444,7 +444,7 @@ public:
 			// Don't doing the box thing for things like wheels on cars
 			IPhysicsObject *pPhysObj = (IPhysicsObject *)(*ppPhysObj);
 
-			if ( pPhysObj )
+			if ( pPhysObj && physcollision )
 			{
 				item.header.modelName = GetModelName( pPhysObj );
 				item.header.iCollide = physcollision->CollideIndex( pPhysObj->GetCollide() );

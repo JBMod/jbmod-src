@@ -649,6 +649,9 @@ void CJBModRules::ClientDisconnected( edict_t *pClient )
 		{
 			pPlayer->GetTeam()->RemovePlayer( pPlayer );
 		}
+
+		if ( pPlayer->IsInAVehicle() )
+			pPlayer->LeaveVehicle();
 	}
 
 	BaseClass::ClientDisconnected( pClient );
@@ -812,6 +815,14 @@ void CJBModRules::ClientSettingsChanged( CBasePlayer *pPlayer )
 	if ( sv_report_client_settings.GetInt() == 1 )
 	{
 		UTIL_LogPrintf( "\"%s\" cl_cmdrate = \"%s\"\n", pHL2Player->GetPlayerName(), engine->GetClientConVarValue( pHL2Player->entindex(), "cl_cmdrate" ));
+	}
+
+	const char *pszFov = engine->GetClientConVarValue( pHL2Player->entindex(), "fov_desired" );
+	if ( pszFov )
+	{
+		int iFov = atoi( pszFov );
+		iFov = clamp( iFov, 75, 90 );
+		pHL2Player->SetDefaultFOV( iFov );
 	}
 
 	BaseClass::ClientSettingsChanged( pPlayer );

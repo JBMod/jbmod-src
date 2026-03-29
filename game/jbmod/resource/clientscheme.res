@@ -1273,7 +1273,7 @@ Scheme
 		"7"		"resource/linux_fonts/DejaVuSans-BoldOblique.ttf"
 		"8"		"resource/linux_fonts/DejaVuSans-Oblique.ttf"
 		"9"		"resource/linux_fonts/LiberationSans-Regular.ttf"
-		"10"		"resource/linux_fonts/LiberationSans-Bold.ttf"
+		"10"	"resource/linux_fonts/LiberationSans-Bold.ttf"
 		"11"	"resource/linux_fonts/LiberationMono-Regular.ttf"
 
 		"12"	"resource/GorDIN-Regular.ttf"

@@ -233,6 +233,8 @@ bool CPropCrane::CreateVPhysics( void )
 //-----------------------------------------------------------------------------
 void CPropCrane::UpdateOnRemove( void )
 {
+	if ( m_hPlayer != NULL )
+		m_hPlayer->LeaveVehicle();
 	m_BoneFollowerManager.DestroyBoneFollowers();
 	BaseClass::UpdateOnRemove();
 }
@@ -404,7 +406,7 @@ bool CPropCrane::CanExitVehicle( CBaseEntity *pEntity )
 void CPropCrane::DrawDebugGeometryOverlays(void) 
 {
 	// Draw if BBOX is on
-	if ( m_debugOverlays & OVERLAY_BBOX_BIT )
+	if ( m_hCraneMagnet && m_debugOverlays & OVERLAY_BBOX_BIT )
 	{
 		Vector vecPoint = m_hCraneMagnet->GetAbsOrigin();
 		int iIndex = m_hCraneMagnet->LookupAttachment("magnetcable_a");
@@ -596,7 +598,7 @@ void CPropCrane::DriveCrane( int iDriverButtons, int iButtonsPressed, float flNP
 	//Msg("Turn: %f\nExtensionRate: %f\n", m_flTurn, m_flExtensionRate );
 
 	//If we're holding down an attack button, update our state
-	if ( iButtonsPressed & (IN_ATTACK | IN_ATTACK2) )
+	if ( m_hCraneMagnet && iButtonsPressed & (IN_ATTACK | IN_ATTACK2) )
 	{
 		// If we have something on the magnet, turn the magnet off
 		if ( m_hCraneMagnet->GetTotalMassAttachedObjects() )
@@ -674,7 +676,7 @@ void CPropCrane::RunCraneMovement( float flTime )
 	if ( m_bDropping )
 	{
 		// Drop until the magnet hits something 
-		if ( m_hCraneMagnet->HasHitSomething() )
+		if ( m_hCraneMagnet && m_hCraneMagnet->HasHitSomething() )
 		{
 			// We hit the ground, stop dropping
 			m_hCraneTip->m_pSpring->SetSpringConstant( CRANE_SPRING_CONSTANT_INITIAL_RAISING );
@@ -726,7 +728,7 @@ void CPropCrane::RunCraneMovement( float flTime )
 	*/
 
 	// Play creak sounds on the magnet if there's heavy weight on it
-	if ( (m_flNextCreakSound < gpGlobals->curtime) && (m_hCraneMagnet->GetTotalMassAttachedObjects() > 100) )
+	if ( m_hCraneMagnet && (m_flNextCreakSound < gpGlobals->curtime) && (m_hCraneMagnet->GetTotalMassAttachedObjects() > 100) )
 	{
 		// Randomly play creaks from the magnet, and increase the chance based on the turning speed
 		float flSpeedPercentage = clamp( fabs(m_flTurn) / m_flMaxTurnSpeed, 0, 1 );

@@ -4737,7 +4737,8 @@ void CNPC_AttackHelicopter::SetTransmit( CCheckTransmitInfo *pInfo, bool bAlways
 	// Make our smoke trails always come with us
 	for ( int i = 0; i < m_nSmokeTrailCount; i++ )
 	{
-		m_hSmokeTrail[i]->SetTransmit( pInfo, bAlways );
+		if ( m_hSmokeTrail[i] )
+			m_hSmokeTrail[i]->SetTransmit( pInfo, bAlways );
 	}
 }
 

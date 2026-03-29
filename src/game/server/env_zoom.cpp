@@ -74,7 +74,11 @@ float GetZoomOwnerDesiredFOV( CBaseEntity *pZoomOwner )
 //-----------------------------------------------------------------------------
 void CEnvZoom::InputZoom( inputdata_t &inputdata )
 {
-	CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
+	CBasePlayer *pPlayer;
+	if ( inputdata.pActivator && inputdata.pActivator->IsPlayer() )
+		pPlayer = ToBasePlayer( inputdata.pActivator );
+	else
+		pPlayer = UTIL_GetLocalPlayer();
 
 	if ( pPlayer )
 	{
@@ -94,6 +98,9 @@ void CEnvZoom::InputZoom( inputdata_t &inputdata )
 			pPlayer->ClearZoomOwner();
 		}
 
+		if ( m_nFOV == pPlayer->GetDefaultFOV() )
+			m_nFOV = 0;
+
 		//Stuff the values
 		pPlayer->SetFOV( this, m_nFOV, m_flSpeed );
 	}
@@ -105,7 +112,11 @@ void CEnvZoom::InputZoom( inputdata_t &inputdata )
 //-----------------------------------------------------------------------------
 void CEnvZoom::InputUnZoom( inputdata_t &inputdata )
 {
-	CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
+	CBasePlayer *pPlayer;
+	if ( inputdata.pActivator && inputdata.pActivator->IsPlayer() )
+		pPlayer = ToBasePlayer( inputdata.pActivator );
+	else
+		pPlayer = UTIL_GetLocalPlayer();
 
 	if ( pPlayer )
 	{

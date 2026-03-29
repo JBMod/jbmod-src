@@ -2514,6 +2514,10 @@ void CBaseEntity::CollisionRulesChanged()
 		}
 		IPhysicsObject *pList[VPHYSICS_MAX_OBJECT_LIST_COUNT];
 		int count = VPhysicsGetObjectList( pList, ARRAYSIZE(pList) );
+		if ( count == NULL || pList == NULL )
+		{
+			return;
+		}
 		for ( int i = 0; i < count; i++ )
 		{
 			if ( pList[i] != NULL ) //this really shouldn't happen, but it does >_<

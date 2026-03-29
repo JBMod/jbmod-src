@@ -679,6 +679,11 @@ void CBasePlayer::PlayStepSound( Vector &vecOrigin, surfacedata_t *psurface, flo
 	if ( !psurface )
 		return;
 
+#ifdef JBMOD
+	if ( GetFlags() & FL_DUCKING )
+		return;
+#endif
+
 	int nSide = m_Local.m_nStepside;
 	unsigned short stepSoundName = nSide ? psurface->sounds.stepleft : psurface->sounds.stepright;
 	if ( !stepSoundName )
@@ -1277,6 +1282,11 @@ void CBasePlayer::PlayerUse ( void )
 	// Was use pressed or released?
 	if ( ! ((m_nButtons | m_afButtonPressed | m_afButtonReleased) & IN_USE) )
 		return;
+
+#ifdef JBMOD
+	if ( m_nButtons & IN_ATTACK )
+		return;
+#endif
 
 	if ( IsObserver() )
 	{

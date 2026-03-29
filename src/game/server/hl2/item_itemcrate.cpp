@@ -8,6 +8,9 @@
 #include "props.h"
 #include "items.h"
 #include "item_dynamic_resupply.h"
+#ifdef JBMOD
+#include "weapon_jbmodbasehlmpcombatweapon.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -232,6 +235,20 @@ void CItem_ItemCrate::OnBreak( const Vector &vecVelocity, const AngularImpulse &
 		{
 			pItem->ActivateWhenAtRest();
 		}
+
+#ifdef JBMOD
+		if ( pItem )
+		{
+			pItem->SetOriginalSpawnAngles( vecAngles );
+			pItem->SetOriginalSpawnOrigin( vecOrigin );
+		}
+		CWeaponJBModBase *pWeapon = dynamic_cast<CWeaponJBModBase*>( pSpawn );
+		if ( pWeapon )
+		{
+			pWeapon->SetOriginalSpawnAngles( vecAngles );
+			pWeapon->SetOriginalSpawnOrigin( vecOrigin );
+		}
+#endif
 
 		pSpawn->Spawn();
 

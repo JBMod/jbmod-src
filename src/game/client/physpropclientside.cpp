@@ -612,6 +612,7 @@ const char *C_PhysPropClientside::ParseEntity( const char *pEntData )
 		Error( "classname missing from entity!\n" );
 	}
 
+#ifndef JBMOD
 	if ( !Q_strcmp( className, "prop_physics_multiplayer" ) )
 	{
 		// always force clientside entitis placed in maps
@@ -627,6 +628,7 @@ const char *C_PhysPropClientside::ParseEntity( const char *pEntData )
 			return entData.CurrentBufferPosition();
 		}
 	}
+#endif
 
 	if ( !Q_strcmp( className, "func_proprrespawnzone" ) )
 	{

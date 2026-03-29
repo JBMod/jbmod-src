@@ -942,25 +942,28 @@ void CRagdollProp::Teleport( const Vector *newPosition, const QAngle *newAngles,
 
 	// we need to call the base class and it will teleport our vphysics object, 
 	// so set object 0 up and compute the origin/angles for its new position (base implementation has side effects)
-	VPhysicsSwapObject( m_ragdoll.list[0].pObject );
-	matrix3x4_t obj0source, obj0Target;
-	m_ragdoll.list[0].pObject->GetPositionMatrix( &obj0source );
-	ConcatTransforms( xform, obj0source, obj0Target );
-	Vector obj0Pos;
-	QAngle obj0Angles;
-	MatrixAngles( obj0Target, obj0Angles, obj0Pos );
-	BaseClass::Teleport( &obj0Pos, &obj0Angles, newVelocity );
-	
-	for ( int i = 1; i < m_ragdoll.listCount; i++ )
+	if ( m_ragdoll.list[0].pObject )
 	{
-		matrix3x4_t matrix, newMatrix;
-		m_ragdoll.list[i].pObject->GetPositionMatrix( &matrix );
-		ConcatTransforms( xform, matrix, newMatrix );
-		m_ragdoll.list[i].pObject->SetPositionMatrix( newMatrix, true );
-		UpdateNetworkDataFromVPhysics( m_ragdoll.list[i].pObject, i );
+		VPhysicsSwapObject( m_ragdoll.list[0].pObject );
+		matrix3x4_t obj0source, obj0Target;
+		m_ragdoll.list[0].pObject->GetPositionMatrix( &obj0source );
+		ConcatTransforms( xform, obj0source, obj0Target );
+		Vector obj0Pos;
+		QAngle obj0Angles;
+		MatrixAngles( obj0Target, obj0Angles, obj0Pos );
+		BaseClass::Teleport( &obj0Pos, &obj0Angles, newVelocity );
+	
+		for ( int i = 1; i < m_ragdoll.listCount; i++ )
+		{
+			matrix3x4_t matrix, newMatrix;
+			m_ragdoll.list[i].pObject->GetPositionMatrix( &matrix );
+			ConcatTransforms( xform, matrix, newMatrix );
+			m_ragdoll.list[i].pObject->SetPositionMatrix( newMatrix, true );
+			UpdateNetworkDataFromVPhysics( m_ragdoll.list[i].pObject, i );
+		}
+		// fixup/relink object 0
+		UpdateNetworkDataFromVPhysics( m_ragdoll.list[0].pObject, 0 );
 	}
-	// fixup/relink object 0
-	UpdateNetworkDataFromVPhysics( m_ragdoll.list[0].pObject, 0 );
 }
 
 void CRagdollProp::VPhysicsUpdate( IPhysicsObject *pPhysics )

@@ -810,6 +810,9 @@ void CPlayerPickupController::Use( CBaseEntity *pActivator, CBaseEntity *pCaller
 		// +ATTACK will throw phys objects
 		if ( m_pPlayer->m_nButtons & IN_ATTACK )
 		{
+			if ( !pPhys )
+				return;
+
 			Shutdown( true );
 			Vector vecLaunch;
 			m_pPlayer->EyeVectors( &vecLaunch );
@@ -2452,6 +2455,8 @@ bool CWeaponPhysCannon::CanPickupObject( CBaseEntity *pTarget )
 //-----------------------------------------------------------------------------
 void CWeaponPhysCannon::OpenElements( void )
 {
+	CDisablePredictionFiltering disabler;
+
 	if ( m_bOpen )
 		return;
 
@@ -2480,6 +2485,8 @@ void CWeaponPhysCannon::OpenElements( void )
 //-----------------------------------------------------------------------------
 void CWeaponPhysCannon::CloseElements( void )
 {
+	CDisablePredictionFiltering disabler;
+
 	if ( m_bOpen == false )
 		return;
 
@@ -2531,6 +2538,8 @@ float CWeaponPhysCannon::GetLoadPercentage( void )
 //-----------------------------------------------------------------------------
 CSoundPatch *CWeaponPhysCannon::GetMotorSound( void )
 {
+	CDisablePredictionFiltering disabler;
+
 #ifdef CLIENT_DLL
 	if ( m_sndMotor == NULL )
 	{

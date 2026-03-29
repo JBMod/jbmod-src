@@ -2185,10 +2185,21 @@ void CGameMovement::FullObserverMove( void )
 
 	float factor = sv_specspeed.GetFloat();
 
+#ifdef JBMOD
+	if ( mv->m_nButtons & IN_DUCK )
+	{
+		factor /= sv_noclipsprint.GetFloat();
+	}
+	if ( mv->m_nButtons & IN_SPEED )
+	{
+		factor *= sv_noclipsprint.GetFloat();
+	}
+#else
 	if ( mv->m_nButtons & IN_SPEED )
 	{
 		factor /= 2.0f;
 	}
+#endif
 
 	float fmove = mv->m_flForwardMove * factor;
 	float smove = mv->m_flSideMove * factor;
@@ -2261,10 +2272,22 @@ void CGameMovement::FullNoClipMove( float factor, float maxacceleration )
 
 	AngleVectors (mv->m_vecViewAngles, &forward, &right, &up);  // Determine movement angles
 
+#ifdef JBMOD
+	if ( mv->m_nButtons & IN_DUCK )
+	{
+		factor /= sv_noclipsprint.GetFloat();
+	}
+	if ( mv->m_nButtons & IN_SPEED )
+	{
+		factor *= sv_noclipsprint.GetFloat();
+	}
+	maxspeed = sv_maxspeed.GetFloat() * factor;
+#else
 	if ( mv->m_nButtons & IN_SPEED )
 	{
 		factor /= 2.0f;
 	}
+#endif
 	
 	// Copy movement amounts
 	float fmove = mv->m_flForwardMove * factor;

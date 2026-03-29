@@ -73,6 +73,8 @@ public:
 	// This defaults to off.
 	void	UseClientSideAnimation();
 
+	void SetClientSideAnimation( bool val ) { m_bClientSideAnimation = val; };
+
 	// Tells whether or not we're using client-side animation. Used for controlling
 	// the transmission of animtime.
 	bool	IsUsingClientSideAnimation()	{ return m_bClientSideAnimation; }
@@ -460,6 +462,9 @@ friend class CBlendingCycler;
 //-----------------------------------------------------------------------------
 inline CStudioHdr *CBaseAnimating::GetModelPtr( void ) 
 { 
+	if ( !this )
+		return NULL;
+
 	if ( IsDynamicModelLoading() )
 		return NULL;
 

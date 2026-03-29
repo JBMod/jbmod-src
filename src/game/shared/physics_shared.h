@@ -100,6 +100,8 @@ void PhysFrictionEffect( Vector &vecPos, Vector vecVel, float energy, int surfac
 // ORs gameFlags with the physics object's current game flags
 inline unsigned short PhysSetGameFlags( IPhysicsObject *pPhys, unsigned short gameFlags )
 {
+	if ( !pPhys ) return 0;
+
 	unsigned short flags = pPhys->GetGameFlags();
 	flags |= gameFlags;
 	pPhys->SetGameFlags( flags );
@@ -109,6 +111,8 @@ inline unsigned short PhysSetGameFlags( IPhysicsObject *pPhys, unsigned short ga
 // mask off gameFlags
 inline unsigned short PhysClearGameFlags( IPhysicsObject *pPhys, unsigned short gameFlags )
 {
+	if ( !pPhys ) return 0;
+
 	unsigned short flags = pPhys->GetGameFlags();
 	flags &= ~gameFlags;
 	pPhys->SetGameFlags( flags );

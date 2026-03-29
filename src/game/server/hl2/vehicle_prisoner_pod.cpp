@@ -110,6 +110,7 @@ public:
 
 	bool ShouldForceExit() { return m_bForcedExit; }
 	void ClearForcedExit() { m_bForcedExit = false; }
+	virtual void	UpdateOnRemove(void);
 
 	// CBaseAnimating
 	void HandleAnimEvent( animevent_t *pEvent );
@@ -652,6 +653,17 @@ void CPropVehiclePrisonerPod::InputEnterVehicleImmediate( inputdata_t &inputdata
 void CPropVehiclePrisonerPod::InputExitVehicle( inputdata_t &inputdata )
 {
 	m_bForcedExit = true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CPropVehiclePrisonerPod::UpdateOnRemove(void)
+{
+	if ( m_hPlayer != NULL )
+		m_hPlayer->LeaveVehicle();
+
+	BaseClass::UpdateOnRemove();
 }
 
 

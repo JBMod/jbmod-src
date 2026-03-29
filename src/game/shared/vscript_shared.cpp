@@ -1,4 +1,4 @@
-//========== Copyright © 2008, Valve Corporation, All rights reserved. ========
+//========== Copyright ï¿½ 2008, Valve Corporation, All rights reserved. ========
 //
 // Purpose:
 //
@@ -185,8 +185,10 @@ CON_COMMAND( script, "Run the text as a script" )
 #endif
 {
 #ifdef CLIENT_DLL
+#ifndef JBMOD
 	if ( !engine->IsClientLocalToActiveServer() )
 		return;
+#endif
 #else
 	if ( !UTIL_IsCommandIssuedByServerAdmin() )
 		return;
@@ -253,8 +255,10 @@ CON_COMMAND( script_execute, "Run a vscript file" )
 #endif
 {
 #ifdef CLIENT_DLL
+#ifndef JBMOD
 	if ( !engine->IsClientLocalToActiveServer() )
 		return;
+#endif
 #else
 	if ( !UTIL_IsCommandIssuedByServerAdmin() )
 		return;
@@ -282,8 +286,10 @@ CON_COMMAND( script_debug, "Connect the vscript VM to the script debugger" )
 #endif
 {
 #ifdef CLIENT_DLL
+#ifndef JBMOD
 	if ( !engine->IsClientLocalToActiveServer() )
 		return;
+#endif
 #else
 	if ( !UTIL_IsCommandIssuedByServerAdmin() )
 		return;
@@ -304,8 +310,10 @@ CON_COMMAND( script_help, "Output help for script functions, optionally with a s
 #endif
 {
 #ifdef CLIENT_DLL
+#ifndef JBMOD
 	if ( !engine->IsClientLocalToActiveServer() )
 		return;
+#endif
 #else
 	if ( !UTIL_IsCommandIssuedByServerAdmin() )
 		return;
@@ -332,8 +340,10 @@ CON_COMMAND( script_dump_all, "Dump the state of the VM to the console" )
 #endif
 {
 #ifdef CLIENT_DLL
+#ifndef JBMOD
 	if ( !engine->IsClientLocalToActiveServer() )
 		return;
+#endif
 #else
 	if ( !UTIL_IsCommandIssuedByServerAdmin() )
 		return;

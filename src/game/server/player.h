@@ -285,7 +285,7 @@ public:
 	// Returns true if this player wants pPlayer to be moved back in time when this player runs usercmds.
 	// Saves a lot of overhead on the server if we can cull out entities that don't need to lag compensate
 	// (like team members, entities out of our PVS, etc).
-	virtual bool			WantsLagCompensationOnEntity( const CBasePlayer	*pPlayer, const CUserCmd *pCmd, const CBitVec<MAX_EDICTS> *pEntityTransmitBits ) const;
+	virtual bool			WantsLagCompensationOnEntity( const CBaseEntity	*pEntity, const CUserCmd *pCmd, const CBitVec<MAX_EDICTS> *pEntityTransmitBits ) const;
 
 	virtual void			Spawn( void );
 	virtual void			Activate( void );
@@ -568,6 +568,7 @@ public:
 	virtual void			PickupObject( CBaseEntity *pObject, bool bLimitMassAndSize = true ) {}
 	virtual void			ForceDropOfCarriedPhysObjects( CBaseEntity *pOnlyIfHoldindThis = NULL ) {}
 	virtual float			GetHeldObjectMass( IPhysicsObject *pHeldObject );
+	virtual CBaseEntity		*GetHeldObject(void);
 
 	void					CheckSuitUpdate();
 	void					SetSuitUpdate(const char *name, int fgroup, int iNoRepeat);

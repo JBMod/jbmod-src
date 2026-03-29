@@ -662,6 +662,9 @@ ConVar	ai_block_damage( "ai_block_damage","0" );
 
 bool CAI_BaseNPC::PassesDamageFilter( const CTakeDamageInfo &info )
 {
+#ifdef JBMOD // We always want NPCs to die
+	return true;
+#endif
 	if ( ai_block_damage.GetBool() )
 		return false;
 	// FIXME: hook a friendly damage filter to the npc instead?
@@ -3222,7 +3225,10 @@ void CAI_BaseNPC::UpdateEfficiency( bool bInPVS )
 				}
 			}
 			
-			iSound = pCurrentSound->NextSound();
+			if ( pCurrentSound )
+				iSound = pCurrentSound->NextSound();
+			else
+				break;
 		}
 	}
 
@@ -3409,7 +3415,10 @@ void CAI_BaseNPC::UpdateSleepState( bool bInPVS )
 							break;
 						}
 
-						iSound = pCurrentSound->NextSound();
+						if ( pCurrentSound )
+							iSound = pCurrentSound->NextSound();
+						else
+							break;
 					}
 				}
 			}
@@ -6560,6 +6569,12 @@ float CAI_BaseNPC::ThrowLimit(	const Vector &vecStart,
 //-----------------------------------------------------------------------------
 void CAI_BaseNPC::SetupVPhysicsHull()
 {
+	if ( GetModelPtr() == NULL )
+	{
+		UTIL_Remove(this);
+		return;
+	}
+
 	if ( GetMoveType() == MOVETYPE_VPHYSICS || GetMoveType() == MOVETYPE_NONE )
 		return;
 
@@ -6573,6 +6588,12 @@ void CAI_BaseNPC::SetupVPhysicsHull()
 	IPhysicsObject *pPhysObj = VPhysicsGetObject();
 	if ( pPhysObj )
 	{
+		if ( !GetModelPtr() )
+		{
+			DevMsg( "Warning: NPC has no model, removing it!\n" );
+			this->Remove();
+			return;
+		}
 		float mass = Studio_GetMass(GetModelPtr());
 		if ( mass > 0 )
 		{

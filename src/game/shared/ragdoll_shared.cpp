@@ -1017,9 +1017,12 @@ void CRagdollLRURetirement::Update( float frametime ) // Non-episodic version
 
 		CBaseAnimating *pRagdoll = m_LRU[i].Get();
 
-		//Just ignore it until we're done burning/dissolving.
-		if ( pRagdoll && pRagdoll->GetEffectEntity() )
-			continue;
+		if (pRagdoll)
+		{
+			//Just ignore it until we're done burning/dissolving.
+			if ( pRagdoll && pRagdoll->GetEffectEntity() )
+				continue;
+		}
 
 #ifdef CLIENT_DLL
 		m_LRU[ i ]->SUB_Remove();

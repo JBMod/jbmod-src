@@ -206,6 +206,7 @@ int	C_PropVehicleChoreoGeneric::GetPassengerRole( C_BaseCombatCharacter *pPassen
 //-----------------------------------------------------------------------------
 void C_PropVehicleChoreoGeneric::GetVehicleViewPosition( int nRole, Vector *pAbsOrigin, QAngle *pAbsAngles, float *pFOV /*=NULL*/ )
 {
+	if ( !m_hPlayer->IsLocalPlayer() ) return;
 	SharedVehicleViewSmoothing( m_hPlayer, 
 								pAbsOrigin, pAbsAngles, 
 								m_bEnterAnimOn, m_bExitAnimOn, 

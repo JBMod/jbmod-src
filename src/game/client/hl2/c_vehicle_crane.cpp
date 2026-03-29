@@ -110,6 +110,7 @@ int	C_PropCrane::GetPassengerRole( C_BaseCombatCharacter *pPassenger )
 //-----------------------------------------------------------------------------
 void C_PropCrane::GetVehicleViewPosition( int nRole, Vector *pAbsOrigin, QAngle *pAbsAngles, float *pFOV /*=NULL*/ )
 {
+	if ( !m_hPlayer->IsLocalPlayer() ) return;
 	SharedVehicleViewSmoothing( m_hPlayer, 
 								pAbsOrigin, pAbsAngles, 
 								m_bEnterAnimOn, m_bExitAnimOn, 

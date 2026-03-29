@@ -2509,7 +2509,8 @@ void CBaseEntity::UpdateOnRemove( void )
 		DevMsg( 2, "Warning: Deleting orphaned children of %s\n", GetClassname() );
 		for ( int i = childrenList.Count()-1; i >= 0; --i )
 		{
-			UTIL_Remove( childrenList[i] );
+			if ( !childrenList[i]->IsPlayer() )
+				UTIL_Remove( childrenList[i] );
 		}
 	}
 
@@ -5736,8 +5737,11 @@ void CC_Ent_Remove( const CCommand& args )
 	}
 
 	// Found one?
-	if ( pEntity )
+	if ( pEntity && pEntity != NULL )
 	{
+		if ( pEntity->IsPlayer() )
+			return;
+
 		Msg( "Removed %s(%s)\n", STRING(pEntity->m_iClassname), pEntity->GetDebugName() );
 		UTIL_Remove( pEntity );
 	}
@@ -5763,6 +5767,9 @@ void CC_Ent_RemoveAll( const CCommand& args )
 				  (ent->m_iClassname != NULL_STRING	&& FStrEq(args[1], STRING(ent->m_iClassname))) ||
 				  (ent->GetClassname()!=NULL && FStrEq(args[1], ent->GetClassname())))
 			{
+				if ( ent->IsPlayer() )
+					continue;
+
 				UTIL_Remove( ent );
 				iCount++;
 			}

@@ -753,6 +753,12 @@ void CFuncTank::Spawn( void )
 		AddSolidFlags( FSOLID_NOT_SOLID );
 	}
 
+	CDynamicProp *pProp = dynamic_cast<CDynamicProp*>( GetParent() );
+	if ( pProp )
+	{
+		pProp->SetClientSideAnimation( false );
+	}
+
 	m_hControlVolume	= NULL;
 
 	if ( GetParent() && GetParent()->GetBaseAnimating() )
@@ -1037,6 +1043,9 @@ bool CFuncTank::StartControl( CBaseCombatCharacter *pController )
 	{
 		m_hController->GetActiveWeapon()->Holster();
 	}
+
+	if ( pController->IsPlayer() )
+		pController->SetNextAttack( gpGlobals->curtime + 1.0f );
 
 	// Set the controller's position to be the use position.
 	m_vecControllerUsePos = m_hController->GetLocalOrigin();
@@ -2159,6 +2168,8 @@ void CFuncTank::DoMuzzleFlash( void )
 			CEffectData data;
 			data.m_nAttachmentIndex = m_nBarrelAttachment;
 			data.m_nEntIndex = pAnim->entindex();
+
+			pAnim->GetAttachment( m_nBarrelAttachment, data.m_vOrigin );
 			
 			// FIXME: Create a custom entry here!
 			DispatchEffect( "ChopperMuzzleFlash", data );
@@ -2170,6 +2181,8 @@ void CFuncTank::DoMuzzleFlash( void )
 			data.m_nAttachmentIndex = m_nBarrelAttachment;
 			data.m_flScale = 1.0f;
 			data.m_fFlags = MUZZLEFLASH_COMBINE;
+
+			pAnim->GetAttachment( m_nBarrelAttachment, data.m_vOrigin );
 
 			DispatchEffect( "MuzzleFlash", data );
 		}
@@ -2437,6 +2450,8 @@ LINK_ENTITY_TO_CLASS( func_tank, CFuncTankGun );
 //-----------------------------------------------------------------------------
 void CFuncTankGun::Fire( int bulletCount, const Vector &barrelEnd, const Vector &forward, CBaseEntity *pAttacker, bool bIgnoreSpread )
 {
+	IPredictionSystem::SuppressHostEvents( NULL );
+
 	int i;
 
 	FireBulletsInfo_t info;
@@ -2963,6 +2978,7 @@ void CFuncTankAirboatGun::DoMuzzleFlash( void )
 		data.m_nEntIndex = m_hAirboatGunModel->entindex();
 		data.m_nAttachmentIndex = m_nGunBarrelAttachment;
 		data.m_flScale = 1.0f;
+		m_hAirboatGunModel->GetAttachment( m_nGunBarrelAttachment, data.m_vOrigin );
 		DispatchEffect( "AirboatMuzzleFlash", data );
 	}
 }
@@ -3554,13 +3570,19 @@ void CMortarShell::FlyThink()
 
 	// Beam updates START
 
-	m_pBeamEffect[0]->SetBrightness( 255 * curve1 );
-	m_pBeamEffect[0]->SetWidth( 64.0f * curve1 );
-	m_pBeamEffect[0]->SetEndWidth( 64.0f * curve1 );
+	if ( m_pBeamEffect[0] )
+	{
+		m_pBeamEffect[0]->SetBrightness( 255 * curve1 );
+		m_pBeamEffect[0]->SetWidth( 64.0f * curve1 );
+		m_pBeamEffect[0]->SetEndWidth( 64.0f * curve1 );
+	}
 
-	m_pBeamEffect[1]->SetBrightness( 255 * curve1 );
-	m_pBeamEffect[1]->SetWidth( 8.0f * curve1 );
-	m_pBeamEffect[1]->SetEndWidth( 8.0f * curve1 );
+	if ( m_pBeamEffect[1] )
+	{
+		m_pBeamEffect[1]->SetBrightness( 255 * curve1 );
+		m_pBeamEffect[1]->SetWidth( 8.0f * curve1 );
+		m_pBeamEffect[1]->SetEndWidth( 8.0f * curve1 );
+	}
 
 	float curve2 = Bias( lifePerc, 0.1f );
 
@@ -3710,13 +3732,19 @@ void CMortarShell::FadeThink( void )
 
 	// Beam updates START
 
-	m_pBeamEffect[0]->SetBrightness( 255 * curve1 );
-	m_pBeamEffect[0]->SetWidth( 64.0f * curve1 );
-	m_pBeamEffect[0]->SetEndWidth( 64.0f * curve1 );
+	if ( m_pBeamEffect[0] )
+	{
+		m_pBeamEffect[0]->SetBrightness( 255 * curve1 );
+		m_pBeamEffect[0]->SetWidth( 64.0f * curve1 );
+		m_pBeamEffect[0]->SetEndWidth( 64.0f * curve1 );
+	}
 
-	m_pBeamEffect[1]->SetBrightness( 255 * curve1 );
-	m_pBeamEffect[1]->SetWidth( 8.0f * curve1 );
-	m_pBeamEffect[1]->SetEndWidth( 8.0f * curve1 );
+	if ( m_pBeamEffect[1] )
+	{
+		m_pBeamEffect[1]->SetBrightness( 255 * curve1 );
+		m_pBeamEffect[1]->SetWidth( 8.0f * curve1 );
+		m_pBeamEffect[1]->SetEndWidth( 8.0f * curve1 );
+	}
 
 	float curve2 = Bias( lifePerc, 0.25f );
 
@@ -4216,6 +4244,11 @@ void CFuncTankCombineCannon::FuncTankPostThink()
 
 			Vector vecTargetPosition = GetTargetPosition();
 			CBasePlayer *pPlayer = AI_GetSinglePlayer();
+			if ( pPlayer == NULL )
+			{
+				CreateBeam();
+				return;
+			}
 			Vector vecToPlayer = pPlayer->WorldSpaceCenter() - GetAbsOrigin();
 			vecToPlayer.NormalizeInPlace();
 

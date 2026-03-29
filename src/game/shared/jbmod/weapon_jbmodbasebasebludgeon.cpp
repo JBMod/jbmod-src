@@ -69,6 +69,13 @@ void CBaseJBModBludgeonWeapon::Precache( void )
 	BaseClass::Precache();
 }
 
+#ifndef CLIENT_DLL
+int CBaseJBModBludgeonWeapon::CapabilitiesGet()
+{
+	return bits_CAP_WEAPON_MELEE_ATTACK1;
+}
+#endif
+
 //------------------------------------------------------------------------------
 // Purpose : Update weapon
 //------------------------------------------------------------------------------

@@ -2892,6 +2892,16 @@ bool C_BasePlayer::GetSteamID( CSteamID *pID )
 	return false;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+const Vector& C_BasePlayer::GetRenderOrigin(void)
+{
+	if ( IsInAVehicle() )
+		InvalidateBoneCache();
+	return BaseClass::GetRenderOrigin();
+}
+
 #if defined USES_ECON_ITEMS
 //-----------------------------------------------------------------------------
 // Purpose: Update the visibility of our worn items.

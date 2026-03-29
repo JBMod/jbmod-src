@@ -1372,7 +1372,7 @@ ConVar  alyx_darkness_force( "alyx_darkness_force", "0", FCVAR_CHEAT | FCVAR_REP
 			flDamage = BaseClass::GetAmmoDamage( pAttacker, pVictim, nAmmoType );
 		}
 
-		if( pAttacker->IsPlayer() && pVictim->IsNPC() )
+		if( pAttacker && pAttacker->IsPlayer() && pVictim->IsNPC() )
 		{
 			if( pVictim->MyCombatCharacterPointer() )
 			{

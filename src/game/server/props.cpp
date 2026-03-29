@@ -5685,7 +5685,11 @@ private:
 	CNetworkVector( m_collisionMaxs );
 };
 
+#ifdef JBMOD
+LINK_ENTITY_TO_CLASS( prop_physics_multiplayer, CPhysicsProp );
+#else
 LINK_ENTITY_TO_CLASS( prop_physics_multiplayer, CPhysicsPropMultiplayer );
+#endif
 
 BEGIN_DATADESC( CPhysicsPropMultiplayer )
 	DEFINE_KEYFIELD( m_iPhysicsMode, FIELD_INTEGER, "physicsmode" ),

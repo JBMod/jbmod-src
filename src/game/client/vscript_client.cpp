@@ -14,7 +14,9 @@
 #include "isaverestore.h"
 #include "gamerules.h"
 #include "vscript_client_nut.h"
+#ifndef JBMOD
 #include "gameui/gameui_interface.h"
+#endif
 
 #ifdef PANORAMA_ENABLE
 #include "panorama/panorama.h"
@@ -263,7 +265,7 @@ bool IsEntityCreationAllowedInScripts( void )
 //
 // Slart: These were Portal 2 only, now they're not
 //
-
+#ifdef PORTAL2
 bool __MsgFunc_SetMixLayerTriggerFactor(const CCSUsrMsg_SetMixLayerTriggerFactor &msg)
 {
 	int iLayerID = engine->GetMixLayerIndex(msg.layer().c_str());
@@ -299,6 +301,7 @@ class CSetMixLayerTriggerHelper : public CAutoGameSystem
 };
 
 static CSetMixLayerTriggerHelper g_SetMixLayerTriggerHelper;
+#endif
 
 #ifdef PANORAMA_ENABLE
 

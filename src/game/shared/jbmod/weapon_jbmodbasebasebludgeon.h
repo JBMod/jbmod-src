@@ -36,6 +36,9 @@ public:
 
 	virtual	void	Spawn( void );
 	virtual	void	Precache( void );
+#ifndef CLIENT_DLL
+	virtual int		CapabilitiesGet(void);
+#endif
 	
 	//Attack functions
 	virtual	void	PrimaryAttack( void );

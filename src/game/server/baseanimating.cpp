@@ -2670,6 +2670,10 @@ void CBaseAnimating::SetModel( const char *szModelName )
 		{
 			Msg( "Setting CBaseAnimating to non-studio model %s  (type:%i)\n",	szModelName, modelinfo->GetModelType( model ) );
 		}
+		if ( modelIndex == -1 )
+		{
+			PrecacheModel( szModelName );
+		}
 	}
 
 	if ( m_boneCacheHandle )

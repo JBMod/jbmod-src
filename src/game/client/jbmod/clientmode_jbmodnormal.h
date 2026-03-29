@@ -32,6 +32,8 @@ public:
 
 	virtual void	Init();
 	virtual int		GetDeathMessageStartHeight( void );
+
+	void			UnCheatConVars( const char **ppCVarNames );
 };
 
 extern IClientMode *GetClientModeNormal();

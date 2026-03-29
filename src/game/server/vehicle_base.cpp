@@ -1089,6 +1089,14 @@ void CPropVehicleDriveable::Event_KilledOther( CBaseEntity *pVictim, const CTake
 	BaseClass::Event_KilledOther( pVictim, info );
 }
 
+void CPropVehicleDriveable::UpdateOnRemove(void)
+{
+	if ( m_hPlayer != NULL )
+		m_hPlayer->LeaveVehicle();
+
+	BaseClass::UpdateOnRemove();
+}
+
 //========================================================================================================================================
 // FOUR WHEEL PHYSICS VEHICLE SERVER VEHICLE
 //========================================================================================================================================

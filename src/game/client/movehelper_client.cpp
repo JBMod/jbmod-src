@@ -201,11 +201,13 @@ void CMoveHelperClient::ProcessImpacts( void )
 		m_pHost->SetAbsVelocity( vOldAbsVel );
 		//m_pHost->SetLocalVelocity( vOldLocalVel );
 
+#ifdef DEBUG
 	if ( vOldLocalVel != vOldAbsVel )
 	{
 		Msg( "vNewLocalVel: %f %f %f\n", m_pHost->GetLocalVelocity().x, m_pHost->GetLocalVelocity().y, m_pHost->GetLocalVelocity().z );
 		Msg( "vNewAbsVel: %f %f %f\n\n", m_pHost->GetAbsVelocity().x, m_pHost->GetAbsVelocity().y, m_pHost->GetAbsVelocity().z );
 	}
+#endif
 
 	// So no stuff is ever left over, sigh...
 	ResetTouchList();

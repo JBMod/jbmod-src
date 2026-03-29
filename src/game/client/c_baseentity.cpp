@@ -1962,6 +1962,9 @@ int C_BaseEntity::DrawBrushModel( bool bDrawingTranslucency, int nFlags, bool bT
 	// Identity brushes are drawn in view->DrawWorld as an optimization
 	Assert ( modelinfo->GetModelType( model ) == mod_brush );
 
+	if ( !render )
+		return 0;
+
 	ERenderDepthMode DepthMode = DEPTH_MODE_NORMAL;
 	if ( ( nFlags & STUDIO_SSAODEPTHTEXTURE ) != 0 )
 	{

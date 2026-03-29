@@ -208,6 +208,8 @@ public:
 	void	StopEngine( void );
 	bool	IsEngineOn( void );
 
+	virtual void	UpdateOnRemove( void );
+
 // IDrivableVehicle
 public:
 	virtual CBaseEntity *GetDriver( void );

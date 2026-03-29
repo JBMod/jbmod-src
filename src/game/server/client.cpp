@@ -949,6 +949,11 @@ void CC_Player_SetModel( const CCommand &args )
 	if ( gpGlobals->deathmatch )
 		return;
 
+#ifdef JBMOD
+	Msg("Use cl_playermodel instead\n");
+	return;
+#endif
+
 	CBasePlayer *pPlayer = ToBasePlayer( UTIL_GetCommandClient() );
 	if ( pPlayer && args.ArgC() == 2)
 	{

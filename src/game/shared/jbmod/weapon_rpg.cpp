@@ -671,6 +671,33 @@ CMissile *CMissile::Create( const Vector &vecOrigin, const QAngle &vecAngles, ed
 	return pMissile;
 }
 
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+CUtlVector<CMissile::CustomDetonator_t> CMissile::gm_CustomDetonators;
+
+void CMissile::AddCustomDetonator( CBaseEntity* pEntity, float radius, float height )
+{
+	int i = gm_CustomDetonators.AddToTail();
+	gm_CustomDetonators[i].hEntity = pEntity;
+	gm_CustomDetonators[i].radiusSq = Square( radius );
+	gm_CustomDetonators[i].halfHeight = height * 0.5f;
+}
+
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CMissile::RemoveCustomDetonator( CBaseEntity* pEntity )
+{
+	for ( int i = 0; i < gm_CustomDetonators.Count(); i++ )
+	{
+		if ( gm_CustomDetonators[i].hEntity == pEntity )
+		{
+			gm_CustomDetonators.FastRemove( i );
+			break;
+		}
+	}
+}
+
 
 
 //-----------------------------------------------------------------------------

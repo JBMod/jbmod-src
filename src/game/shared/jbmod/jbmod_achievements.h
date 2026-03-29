@@ -1,4 +1,4 @@
-// Copyright 2026 The JBMod Authors
+// Copyright 2025 The JBMod Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,13 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-printl( "Initializing Sandbox..." );
-SetGameDescription( "JBMod Sandbox" );
-Convars.SetValue( "sv_infinite_aux_power", 1 );
-Convars.SetValue( "mp_falldamage", 1 );
+#ifndef JBMOD_ACHIEVEMENTS_H
+#define JBMOD_ACHIEVEMENTS_H
+#ifdef _WIN32
+#pragma once
+#endif
 
-function OnPlayerSpawn( player )
+#include "achievementmgr.h"
+
+enum
 {
-	player.EquipSuit();
-	player.GiveItem( "weapon_physcannon" );
-}
+	ACHIEVEMENT_JBMOD_PLAYED = 1001,
+	ACHIEVEMENT_JBMOD_PLAYED_ATLAUNCH,
+	ACHIEVEMENT_JBMOD_PLAYED_90DAYS,
+};
+
+extern CAchievementMgr g_AchievementMgrJB;
+
+void CheckStartupAchievements();
+
+#endif // JBMOD_ACHIEVEMENTS_H

@@ -41,8 +41,10 @@ public:
 	}
 	bool MyTouch( CBasePlayer *pPlayer )
 	{
+#ifndef JBMOD // Pick up suit even if we have one
 		if ( pPlayer->IsSuitEquipped() )
 			return FALSE;
+#endif
 
 		if ( m_spawnflags & SF_SUIT_SHORTLOGON )
 			UTIL_EmitSoundSuit(pPlayer->edict(), "!HEV_A0");		// short version of suit logon,

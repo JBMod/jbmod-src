@@ -13,6 +13,9 @@
 #include "jbmod_player_shared.h"
 #include "basecombatweapon_shared.h"
 #include "jbmod_weapon_parse.h"
+#ifndef CLIENT_DLL
+#include "ai_basenpc.h"
+#endif
 
 #if defined( CLIENT_DLL )
 	#define CWeaponJBModBase C_WeaponJBModBase
@@ -80,6 +83,8 @@ public:
 
 	Vector	GetOriginalSpawnOrigin( void ) { return m_vOriginalSpawnOrigin;	}
 	QAngle	GetOriginalSpawnAngles( void ) { return m_vOriginalSpawnAngles;	}
+	void	SetOriginalSpawnOrigin( const Vector& origin ) { m_vOriginalSpawnOrigin = origin; }
+	void	SetOriginalSpawnAngles( const QAngle& angles ) { m_vOriginalSpawnAngles = angles; }
 
 private:
 
