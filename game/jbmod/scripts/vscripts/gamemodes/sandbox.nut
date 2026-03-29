@@ -20,4 +20,20 @@ function OnPlayerSpawn( player )
 {
 	player.EquipSuit();
 	player.GiveItem( "weapon_physcannon" );
+	player.GiveItem( "weapon_crowbar" );
+	player.GiveItem( "weapon_pistol" );
+	player.GiveItem( "weapon_357" );
+	player.GiveItem( "weapon_stunstick" );
+	player.GiveItem( "weapon_smg1" );
+	player.GiveItem( "weapon_physcannon" );
+	player.GiveItem( "weapon_ar2" );
+	player.GiveItem( "weapon_shotgun" );
+	player.GiveItem( "weapon_frag" );
+	player.GiveItem( "weapon_crossbow" );
+	player.GiveItem( "weapon_rpg" );
+	player.GiveItem( "weapon_slam" );
+	player.GiveItem( "weapon_alyxgun_p" );
+	//player.GiveItem( "weapon_bugbait" );
+	//player.GiveItem( "weapon_annabelle" );
+	//TODO: Give ammo to the player
 }
