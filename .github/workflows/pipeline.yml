@@ -186,7 +186,7 @@ jobs:
         run: |
           cp -r valve/game/jbmod game/jbmod_base
           cp -r game/jbmod/* game/jbmod_base/
-          vpk-ctrl -b game/jbmod_base game/jbmod_base/*.cfg game/jbmod_base/*.txt !game/jbmod_base/gameinfo.txt !game/jbmod_base/steam.inf game/jbmod_base/cfg !game/jbmod_base/cfg/*_example.txt !game/jbmod_base/cfg/settings.scr game/jbmod_base/maps !game/jbmod_base/maps/*.bsp game/jbmod_base/materials game/jbmod_base/media game/jbmod_base/models game/jbmod_base/resource !game/jbmod_base/resource/*.ico !game/jbmod_base/resource/*.ttf game/jbmod_base/scripts game/jbmod_base/servers game/jbmod_base/sound > pak01.vdf
+          vpk-ctrl -b game/jbmod_base game/jbmod_base/*.cfg game/jbmod_base/*.txt !game/jbmod_base/gameinfo.txt !game/jbmod_base/steam.inf game/jbmod_base/cfg !game/jbmod_base/cfg/autoexec.cfg !game/jbmod_base/cfg/*_example.txt !game/jbmod_base/cfg/settings.scr game/jbmod_base/maps !game/jbmod_base/maps/*.bsp game/jbmod_base/materials game/jbmod_base/media game/jbmod_base/models game/jbmod_base/resource !game/jbmod_base/resource/*.ico !game/jbmod_base/resource/*.ttf game/jbmod_base/scripts game/jbmod_base/servers game/jbmod_base/sound > pak01.vdf
           vpk -M -P -K privatekey.vdf -k publickey.vdf k game/jbmod_base/jbmod_pak pak01.vdf
           cp pak01.vdf pak01.vdf.bak
           vpk-cleaner -c pak01.vdf game/jbmod_base game/jbmod_clean
