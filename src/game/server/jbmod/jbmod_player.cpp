@@ -37,6 +37,7 @@ CBaseEntity	 *g_pLastRebelSpawn = NULL;
 extern CBaseEntity				*g_pLastSpawn;
 
 ConVar jbmod_spawn_frag_fallback_radius( "jbmod_spawn_frag_fallback_radius", "48", FCVAR_NONE, "If no spawns are available, kill players with this radius to allow new players to spawn." );
+ConVar jbmod_impulse_enabled("jbmod_impulse_enabled", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "If enabled you can use the impulse commands, if disabled you cant use any of them");
 
 #define JBMOD_COMMAND_MAX_RATE 0.3
 
@@ -213,14 +214,14 @@ void CJBMod_Player::GiveAllItems( void )
 	CBasePlayer::GiveAmmo( 255,	"AR2" );
 	CBasePlayer::GiveAmmo( 5,	"AR2AltFire" );
 	CBasePlayer::GiveAmmo( 255,	"SMG1");
-	CBasePlayer::GiveAmmo( 1,	"smg1_grenade");
+	CBasePlayer::GiveAmmo( 5,	"smg1_grenade");
 	CBasePlayer::GiveAmmo( 255,	"Buckshot");
 	CBasePlayer::GiveAmmo( 32,	"357" );
 	CBasePlayer::GiveAmmo( 3,	"rpg_round");
 	CBasePlayer::GiveAmmo( 16,	"XBowBolt");
 
-	CBasePlayer::GiveAmmo( 1,	"grenade" );
-	CBasePlayer::GiveAmmo( 2,	"slam" );
+	CBasePlayer::GiveAmmo( 5,	"grenade" );
+	CBasePlayer::GiveAmmo( 5,	"slam" );
 
 	GiveNamedItem( "weapon_crowbar" );
 	GiveNamedItem( "weapon_stunstick" );
@@ -240,6 +241,8 @@ void CJBMod_Player::GiveAllItems( void )
 	GiveNamedItem( "weapon_slam" );
 
 	GiveNamedItem( "weapon_physcannon" );
+
+	GiveNamedItem("weapon_alyxgun_p");
 	
 }
 
@@ -1097,9 +1100,13 @@ void CJBMod_Player::CheatImpulseCommands( int iImpulse )
 	{
 		case 101:
 			{
-				if( sv_cheats->GetBool() )
+				if( jbmod_impulse_enabled.GetBool() )
 				{
 					GiveAllItems();
+				}
+				else
+				{
+					Warning("You cant use this command because jbmod_impulse_enabled is false\n");
 				}
 			}
 			break;
