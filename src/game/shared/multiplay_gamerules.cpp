@@ -103,6 +103,8 @@ ConVar mp_restartgame_immediate( "mp_restartgame_immediate", "0", FCVAR_GAMEDLL,
 
 ConVar mp_mapcycle_empty_timeout_seconds( "mp_mapcycle_empty_timeout_seconds", "0", FCVAR_REPLICATED, "If nonzero, server will cycle to the next map if it has been empty on the current map for N seconds");
 
+ConVar mp_falldamage_amount("mp_falldamage_amount", "10.0", FCVAR_REPLICATED | FCVAR_NOTIFY, "If you put 10 you will loose 10, only works if mp_falldamge equals 0");
+
 void cc_SkipNextMapInCycle()
 {
 	if ( !UTIL_IsCommandIssuedByServerAdmin() )
@@ -626,6 +628,7 @@ ConVarRef suitcharger( "sk_suitcharger" );
 
 	//=========================================================
 	//=========================================================
+	//This seems to be the block of code that checks for fall damage and calculates it
 	float CMultiplayRules::FlPlayerFallDamage( CBasePlayer *pPlayer )
 	{
 		int iFallDamage = (int)falldamage.GetFloat();
@@ -637,8 +640,8 @@ ConVarRef suitcharger( "sk_suitcharger" );
 			return pPlayer->m_Local.m_flFallVelocity * DAMAGE_FOR_FALL_SPEED;
 			break;
 		default:
-		case 0:// fixed
-			return 10;
+		case 0:// fixed by the cvar mp_falldamage_amount
+			return mp_falldamage_amount.GetFloat();
 			break;
 		}
 	} 
