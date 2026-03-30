@@ -81,8 +81,6 @@ extern ConVar autoaim_max_dist;
 
 extern int gEvilImpulse101;
 
-ConVar sv_autojump( "sv_autojump", "0" );
-
 ConVar hl2_walkspeed( "hl2_walkspeed", "150", FCVAR_REPLICATED );
 ConVar hl2_normspeed( "hl2_normspeed", "190", FCVAR_REPLICATED );
 ConVar hl2_sprintspeed( "hl2_sprintspeed", "320", FCVAR_REPLICATED );
@@ -651,48 +649,7 @@ void CHL2_Player::PreThink(void)
 		return;
 	}
 
-	// This is an experiment of mine- autojumping! 
-	// only affects you if sv_autojump is nonzero.
-	if( (GetFlags() & FL_ONGROUND) && sv_autojump.GetFloat() != 0 )
-	{
-		VPROF( "CHL2_Player::PreThink-Autojump" );
-		// check autojump
-		Vector vecCheckDir;
-
-		vecCheckDir = GetAbsVelocity();
-
-		float flVelocity = VectorNormalize( vecCheckDir );
-
-		if( flVelocity > 200 )
-		{
-			// Going fast enough to autojump
-			vecCheckDir = WorldSpaceCenter() + vecCheckDir * 34 - Vector( 0, 0, 16 );
-
-			trace_t tr;
-
-			UTIL_TraceHull( WorldSpaceCenter() - Vector( 0, 0, 16 ), vecCheckDir, NAI_Hull::Mins(HULL_TINY_CENTERED),NAI_Hull::Maxs(HULL_TINY_CENTERED), MASK_PLAYERSOLID, this, COLLISION_GROUP_PLAYER, &tr );
-			
-			//NDebugOverlay::Line( tr.startpos, tr.endpos, 0,255,0, true, 10 );
-
-			if( tr.fraction == 1.0 && !tr.startsolid )
-			{
-				// Now trace down!
-				UTIL_TraceLine( vecCheckDir, vecCheckDir - Vector( 0, 0, 64 ), MASK_PLAYERSOLID, this, COLLISION_GROUP_NONE, &tr );
-
-				//NDebugOverlay::Line( tr.startpos, tr.endpos, 0,255,0, true, 10 );
-
-				if( tr.fraction == 1.0 && !tr.startsolid )
-				{
-					// !!!HACKHACK
-					// I KNOW, I KNOW, this is definitely not the right way to do this,
-					// but I'm prototyping! (sjb)
-					Vector vecNewVelocity = GetAbsVelocity();
-					vecNewVelocity.z += 250;
-					SetAbsVelocity( vecNewVelocity );
-				}
-			}
-		}
-	}
+	
 
 	VPROF_SCOPE_BEGIN( "CHL2_Player::PreThink-Speed" );
 
