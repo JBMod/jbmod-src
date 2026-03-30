@@ -5,7 +5,7 @@ WeaponData
 	// Weapon data is loaded by both the Game and Client DLLs.
 	// TODO: the printname should use jbmod_english.txt string instead of this one
 	"printname"	"ALYX GUN"
-	"viewmodel"				"models/weapons/v_pistol.mdl"
+	"viewmodel"				"models/weapons/v_Alyx_Gun.mdl"
 	"playermodel"			"models/weapons/W_Alyx_Gun.mdl"	//FIXME: 
 	"anim_prefix"			"alyxgun"
 	"bucket"				"1"
@@ -27,14 +27,15 @@ WeaponData
 	SoundData
 	{
 
-		"reload"		"Weapon_Pistol.Reload"
-		"reload_npc"	"Weapon_Pistol.NPC_Reload"
-		"empty"			"Weapon_Pistol.Empty"
-		"single_shot"	"Weapon_Pistol.Single"
-		"single_shot_npc"	"Weapon_Pistol.NPC_Single"
-		"special1"		"Weapon_Pistol.Special1"
-		"special2"		"Weapon_Pistol.Special2"
-		"burst"			"Weapon_Pistol.Burst"
+		"reload"			"Weapon_Pistol.Reload"
+		"reload_npc"		"Weapon_Pistol.NPC_Reload"
+		"empty"				"Weapon_SMG1.Empty"
+		"single_shot"		"Weapon_SMG1.Burst"
+		"single_shot_npc"	"Weapon_SMG1.NPC_Single"
+		"special1"			"Weapon_SMG1.Special1"
+		"special2"			"Weapon_SMG1.Special2"
+		"double_shot"		"Weapon_SMG1.Double"
+		"burst"				"Weapon_SMG1.Burst"
 	}
 
 	// Weapon Sprite data is loaded by the Client DLL.
