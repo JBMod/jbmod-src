@@ -408,7 +408,7 @@ bool CJBMod_Player::ValidatePlayerModel( const char *pModel )
 	return false;
 }
 
-ConVar jbmod_allow_pickup( "jbmod_allow_pickup", "0", FCVAR_GAMEDLL );
+ConVar jbmod_allow_pickup( "jbmod_allow_pickup", "1", FCVAR_GAMEDLL );
 
 void CJBMod_Player::PickupObject( CBaseEntity* pObject, bool bLimitMassAndSize )
 {
