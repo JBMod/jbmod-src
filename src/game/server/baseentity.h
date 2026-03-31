@@ -1106,6 +1106,9 @@ public:
 	static void				PhysicsRemoveGround( CBaseEntity *other, groundlink_t *link );
 	static void				PhysicsRemoveGroundList( CBaseEntity *ent );
 
+	void					ApplyForceCenter( const Vector &force );
+	bool					IsPhysicsObject();
+
 	void					StartGroundContact( CBaseEntity *ground );
 	void					EndGroundContact( CBaseEntity *ground );
 

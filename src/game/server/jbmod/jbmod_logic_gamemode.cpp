@@ -22,8 +22,6 @@
 
 BEGIN_DATADESC( CJBModLogicGamemode )
 	DEFINE_KEYFIELD( m_iszGameMode, FIELD_STRING, "gamemode" ),
-
-	DEFINE_INPUTFUNC( FIELD_VOID, "Enable", InputEnable ),
 END_DATADESC()
 
 LINK_ENTITY_TO_CLASS( jbmod_logic_gamemode, CJBModLogicGamemode );
@@ -37,14 +35,6 @@ void CJBModLogicGamemode::Activate()
 {
 	BaseClass::Activate();
 
-	if ( !HasSpawnFlags( SF_GAMEMODE_START_DISABLED ) )
-	{
-		ApplySettings();
-	}
-}
-
-void CJBModLogicGamemode::InputEnable( inputdata_t &inputdata )
-{
 	ApplySettings();
 }
 
@@ -57,6 +47,9 @@ void CJBModLogicGamemode::ApplySettings()
 
 	if ( pszGameMode && *pszGameMode )
 	{
+		if ( !Q_stricmp( JBModRules()->m_szGameMode, pszGameMode ) )
+			return;
+
 		Q_strncpy( JBModRules()->m_szGameMode, pszGameMode, 64 );
 
 		char szScriptPath[256];

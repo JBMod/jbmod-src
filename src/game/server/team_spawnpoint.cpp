@@ -16,7 +16,9 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+#ifndef JBMOD
 LINK_ENTITY_TO_CLASS( info_player_teamspawn, CTeamSpawnPoint );
+#endif
 
 BEGIN_DATADESC( CTeamSpawnPoint )
 

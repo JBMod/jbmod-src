@@ -40,6 +40,7 @@
 #include "cdll_bounded_cvars.h"
 #include "inetchannelinfo.h"
 #include "proto_version.h"
+#include "gamestringpool.h"
 
 #ifdef TF_CLIENT_DLL
 #include "c_tf_player.h"
@@ -567,6 +568,12 @@ BEGIN_PREDICTION_DATA_NO_BASE( C_BaseEntity )
 	// DEFINE_FIELD( m_bPredictionEligible, FIELD_BOOLEAN ),
 #endif
 END_PREDICTION_DATA()
+
+#ifdef JBMOD
+BEGIN_ENT_SCRIPTDESC_ROOT( C_BaseEntity, "Root class of all client-side entities" )
+
+END_SCRIPTDESC();
+#endif // JBMOD
 
 //-----------------------------------------------------------------------------
 // Helper functions.
@@ -6478,6 +6485,25 @@ int C_BaseEntity::GetCreationTick() const
 {
 	return m_nCreationTick;
 }
+
+#ifdef JBMOD
+HSCRIPT C_BaseEntity::GetScriptInstance()
+{
+	if ( !m_hScriptInstance )
+	{
+		if ( m_iszScriptId == NULL_STRING )
+		{
+			char *szName = (char *)stackalloc( 1024 );
+			g_pScriptVM->GenerateUniqueKey( GetClassname(), szName, 1024 );
+			m_iszScriptId = AllocPooledString( szName );
+		}
+
+		m_hScriptInstance = g_pScriptVM->RegisterInstance( GetScriptDesc(), this );
+		g_pScriptVM->SetInstanceUniqeId( m_hScriptInstance, STRING(m_iszScriptId) );
+	}
+	return m_hScriptInstance;
+}
+#endif // JBMOD
 
 //------------------------------------------------------------------------------
 void CC_CL_Find_Ent( const CCommand& args )

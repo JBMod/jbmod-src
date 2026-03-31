@@ -20,6 +20,12 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+#ifdef JBMOD
+BEGIN_ENT_SCRIPTDESC( C_BaseCombatWeapon, BASECOMBATWEAPON_DERIVED_FROM, "Base Combat Weapon" )
+
+END_SCRIPTDESC();
+#endif // JBMOD
+
 //-----------------------------------------------------------------------------
 // Purpose: Gets the local client's active weapon, if any.
 //-----------------------------------------------------------------------------

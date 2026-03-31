@@ -44,6 +44,7 @@ public:
 	virtual const char		*Lookup( const char *classname );
 	virtual C_BaseEntity	*CreateEntity( const char *mapname );
 	virtual int				GetClassSize( const char *classname );
+	virtual DISPATCHFUNCTION FindFactory( const char *classname );
 
 private:
 	CUtlDict< classentry_t, unsigned short > m_ClassDict;
@@ -134,4 +135,24 @@ int CClassMap::GetClassSize( const char *classname )
 	}
 
 	return -1;
+}
+
+DISPATCHFUNCTION CClassMap::FindFactory( const char *classname )
+{
+	int c = m_ClassDict.Count();
+	int i;
+
+	for ( i = 0; i < c; i++ )
+	{
+		classentry_t *lookup = &m_ClassDict[ i ];
+		if ( !lookup )
+			continue;
+
+		if ( Q_strcmp( lookup->GetMapName(), classname ) )
+			continue;
+
+		return lookup->factory;
+	}
+
+	return NULL;
 }

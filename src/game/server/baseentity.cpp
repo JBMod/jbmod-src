@@ -1640,6 +1640,19 @@ void CBaseEntity::SetPhysAngularVelocity( const Vector &angularImpulse )
 	}
 }
 
+void CBaseEntity::ApplyForceCenter( const Vector &force )
+{
+	if ( VPhysicsGetObject() )
+	{
+		VPhysicsGetObject()->ApplyForceCenter( force );
+	}
+}
+
+bool CBaseEntity::IsPhysicsObject()
+{
+	return VPhysicsGetObject() != NULL;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: Scale damage done and call OnTakeDamage
 //-----------------------------------------------------------------------------
@@ -2365,6 +2378,9 @@ BEGIN_ENT_SCRIPTDESC_ROOT( CBaseEntity, "Root class of all server-side entities"
 	DEFINE_SCRIPTFUNC( GetPhysAngularVelocity, "" )
 	DEFINE_SCRIPTFUNC( SetPhysVelocity, "" )
 	DEFINE_SCRIPTFUNC( SetPhysAngularVelocity, "" )
+	DEFINE_SCRIPTFUNC( ApplyForceCenter, "" )
+	DEFINE_SCRIPTFUNC( IsPhysicsObject, "Whether the entity has a physics object" )
+
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetMoveType, "GetMoveType", "")
 	DEFINE_SCRIPTFUNC_NAMED( ScriptSetMoveType, "SetMoveType", "" )
 
