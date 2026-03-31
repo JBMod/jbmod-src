@@ -191,6 +191,29 @@ void PrecacheFileWeaponInfoDatabase( IFileSystem *pFilesystem, const unsigned ch
 		}
 	}
 	manifest->deleteThis();
+
+#ifdef JBMOD
+	FileFindHandle_t findHandle;
+	const char *pFilename = pFilesystem->FindFirstEx( "scripts/weapon_*.txt", "GAME", &findHandle );
+	while ( pFilename )
+	{
+		char fileBase[512];
+		Q_FileBase( pFilename, fileBase, sizeof(fileBase) );
+
+		WEAPON_FILE_INFO_HANDLE tmp;
+#ifdef CLIENT_DLL
+		if ( ReadWeaponDataFromFileForSlot( pFilesystem, fileBase, &tmp, pICEKey ) )
+		{
+			gWR.LoadWeaponSprites( tmp );
+		}
+#else
+		ReadWeaponDataFromFileForSlot( pFilesystem, fileBase, &tmp, pICEKey );
+#endif
+
+		pFilename = pFilesystem->FindNext( findHandle );
+	}
+	pFilesystem->FindClose( findHandle );
+#endif // JBMOD
 }
 
 KeyValues* ReadEncryptedKVFile( IFileSystem *pFilesystem, const char *szFilenameWithoutExtension, const unsigned char *pICEKey, bool bForceReadEncryptedFile /*= false*/ )

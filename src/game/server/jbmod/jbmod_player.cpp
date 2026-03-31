@@ -44,17 +44,6 @@ void DropPrimedFragGrenade( CJBMod_Player *pPlayer, CBaseCombatWeapon *pGrenade 
 
 LINK_ENTITY_TO_CLASS( player, CJBMod_Player );
 
-LINK_ENTITY_TO_CLASS( info_player_combine, CPointEntity );
-LINK_ENTITY_TO_CLASS( info_player_rebel, CPointEntity );
-
-// CSS spawn entities
-LINK_ENTITY_TO_CLASS( info_player_terrorist, CPointEntity );
-LINK_ENTITY_TO_CLASS( info_player_counterterrorist, CPointEntity );
-
-// DOD spawn entities
-LINK_ENTITY_TO_CLASS( info_player_allies, CPointEntity );
-LINK_ENTITY_TO_CLASS( info_player_axis, CPointEntity );
-
 // specific to the local player
 BEGIN_SEND_TABLE_NOBASE( CJBMod_Player, DT_JBModLocalPlayerExclusive )
 	// send a hi-res origin to the local player for use in prediction

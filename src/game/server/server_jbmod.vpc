@@ -366,6 +366,7 @@ $Project "Server (JBMod)"
 			$File	"$SRCDIR\game\shared\jbmod\jbmod_player_shared.h"
 			$File	"$SRCDIR\game\shared\jbmod\jbmod_weapon_parse.cpp"
 			$File	"$SRCDIR\game\shared\jbmod\jbmod_weapon_parse.h"
+			$File	"jbmod\vscript_init.cpp"
 
 			$Folder "Bots"
 			{
@@ -464,6 +465,8 @@ $Project "Server (JBMod)"
 				$File	"$SRCDIR\game\shared\jbmod\weapon_slam.h"
 				$File	"$SRCDIR\game\shared\jbmod\weapon_smg1.cpp"
 				$File	"$SRCDIR\game\shared\jbmod\weapon_stunstick.cpp"
+				$File	"$SRCDIR\game\shared\jbmod\weapon_scripted.cpp"
+				$File	"$SRCDIR\game\shared\jbmod\weapon_scripted.h"
 			}
 		}
 	}

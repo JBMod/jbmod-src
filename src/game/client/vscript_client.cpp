@@ -25,6 +25,7 @@
 
 #include "usermessages.h"
 #include "hud_macros.h"
+#include "iclassmap.h"
 
 #if defined( PORTAL2_PUZZLEMAKER )
 #include "matchmaking/imatchframework.h"
@@ -46,6 +47,22 @@ extern ScriptClassDesc_t * GetScriptDesc( CBaseEntity * );
 #define VMPROF_SHOW
 
 #endif // VMPROFILE
+
+void ScriptRegisterEntityClass( const char *pszNewClassname, const char *pszBaseClassname )
+{
+	DISPATCHFUNCTION factory = GetClassMap().FindFactory( pszBaseClassname );
+	if ( !factory )
+	{
+		Warning( "ScriptRegisterEntityClass: Could not find base factory for '%s' on client\n", pszBaseClassname );
+		return;
+	}
+
+	if ( !GetClassMap().FindFactory( pszNewClassname ) )
+	{
+		int size = GetClassMap().GetClassSize( pszBaseClassname );
+		GetClassMap().Add( pszNewClassname, pszNewClassname, size, factory );
+	}
+}
 
 //-----------------------------------------------------------------------------
 //
@@ -166,6 +183,7 @@ bool VScriptClientInit()
 			if( g_pScriptVM )
 			{
 				Log_Msg( LOG_VScript, "VSCRIPT: Started VScript virtual machine using script language '%s'\n", g_pScriptVM->GetLanguageName() );
+				ScriptRegisterFunctionNamed( g_pScriptVM, ScriptRegisterEntityClass, "RegisterEntityClass", "Registers a new entity classname mapped to an existing base class" );
 				ScriptRegisterFunction( g_pScriptVM, GetMapName, "Get the name of the map.");
 				ScriptRegisterFunction( g_pScriptVM, Time, "Get the current server time" );
 				ScriptRegisterFunction( g_pScriptVM, DoIncludeScript, "Execute a script (internal)" );
@@ -174,6 +192,8 @@ bool VScriptClientInit()
 				ScriptRegisterFunction( g_pScriptVM, RequestMapRating, "Pops up the map rating dialog for user input" );
 #endif // PORTAL2_PUZZLEMAKER
 				
+				g_pScriptVM->RegisterAllClasses();
+
 				if ( GameRules() )
 				{
 					GameRules()->RegisterScriptFunctions();
@@ -182,6 +202,9 @@ bool VScriptClientInit()
 #ifdef PANORAMA_ENABLE
 				g_pScriptVM->RegisterInstance( &g_ScriptPanorama, "Panorama" );
 #endif
+
+				g_pScriptVM->SetValue( "CLIENT", true );
+				g_pScriptVM->SetValue( "SERVER", false );
 
 				if ( scriptLanguage == SL_SQUIRREL )
 				{

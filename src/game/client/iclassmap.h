@@ -23,6 +23,7 @@ public:
 	virtual char const		*Lookup( const char *classname ) = 0;
 	virtual C_BaseEntity	*CreateEntity( const char *mapname ) = 0;
 	virtual int				GetClassSize( const char *classname ) = 0;
+	virtual DISPATCHFUNCTION FindFactory( const char *classname ) = 0;
 };
 
 extern IClassMap& GetClassMap();

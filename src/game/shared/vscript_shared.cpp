@@ -106,7 +106,8 @@ HSCRIPT VScriptCompileScript( const char *pszScriptName, bool bWarnMissing )
 
 		if( !bResult )
 		{
-			Log_Warning( LOG_VScript, "Script not found (%s) \n", scriptPath.operator const char *() );
+			if ( bWarnMissing )
+				Log_Warning( LOG_VScript, "Script not found (%s) \n", scriptPath.operator const char *() );
 			Assert( "Error running script" );
 		}
 

@@ -76,6 +76,21 @@ ConVar script_break_in_native_debugger_on_error( "script_break_in_native_debugge
 
 #define VSCRIPT_CONVAR_ALLOWLIST_NAME "cfg/vscript_convar_allowlist.txt"
 
+void ScriptRegisterEntityClass( const char *pszNewClassname, const char *pszBaseClassname )
+{
+	IEntityFactory *pFactory = EntityFactoryDictionary()->FindFactory( pszBaseClassname );
+	if ( !pFactory )
+	{
+		Warning( "ScriptRegisterEntityClass: Could not find base factory for '%s'\n", pszBaseClassname );
+		return;
+	}
+
+	if ( !EntityFactoryDictionary()->FindFactory( pszNewClassname ) )
+	{
+		EntityFactoryDictionary()->InstallFactory( pFactory, pszNewClassname );
+	}
+}
+
 /// Exposes convars to script
 class CScriptConvarAccessor : public CAutoGameSystem
 {
@@ -2499,6 +2514,7 @@ bool VScriptServerInit()
 				Log_Msg( LOG_VScript, "VSCRIPT: Started VScript virtual machine using script language '%s'\n", g_pScriptVM->GetLanguageName() );
 				g_pScriptVM->SetErrorCallback( &VScriptServerScriptErrorFunc );
 
+				ScriptRegisterFunctionNamed( g_pScriptVM, ScriptRegisterEntityClass, "RegisterEntityClass", "Registers a new entity classname mapped to an existing base class" );
 				ScriptRegisterFunctionNamed( g_pScriptVM, UTIL_ShowMessageAll, "ShowMessage", "Print a hud message on all clients" );
 				ScriptRegisterFunction( g_pScriptVM, SendToConsole, "Send a string to the console as a command" );
 				ScriptRegisterFunction( g_pScriptVM, SendToServerConsole, "Send a string that gets executed on the server as a ServerCommand. Respects sv_allow_point_servercommand." );
@@ -3497,6 +3513,9 @@ DECLARE_SCRIPT_CONST_NAMED( Server, "ConstantNamingConvention", "Constants are n
 REGISTER_SCRIPT_CONST_TABLE( Server )
 #endif
 				g_pScriptVM->SetValue( "Constants", vConstantsTable );
+				
+				g_pScriptVM->SetValue( "CLIENT", false );
+				g_pScriptVM->SetValue( "SERVER", true );
 
 				if ( scriptLanguage == SL_SQUIRREL )
 				{
@@ -3969,7 +3988,8 @@ public:
 		//          diagnostics that detects such loops and warns the developer.
 		
 		m_bAllowEntityCreationInScripts = true;
-		VScriptServerInit();
+		if ( !g_pScriptVM )
+			VScriptServerInit();
 	}
 
 	virtual void LevelInitPostEntity( void )

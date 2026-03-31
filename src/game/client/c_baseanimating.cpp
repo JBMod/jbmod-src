@@ -253,6 +253,12 @@ BEGIN_PREDICTION_DATA( C_BaseAnimating )
 
 END_PREDICTION_DATA()
 
+#ifdef JBMOD
+BEGIN_ENT_SCRIPTDESC( C_BaseAnimating, CBaseEntity, "Animating models" )
+
+END_SCRIPTDESC();
+#endif // JBMOD
+
 LINK_ENTITY_TO_CLASS( client_ragdoll, C_ClientRagdoll );
 
 BEGIN_DATADESC( C_ClientRagdoll )

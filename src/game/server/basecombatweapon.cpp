@@ -87,6 +87,7 @@ BEGIN_ENT_SCRIPTDESC( CBaseCombatWeapon, BASECOMBATWEAPON_DERIVED_FROM, "Base Co
 	DEFINE_SCRIPTFUNC( SetClip2, "Set current ammo in clip2" )
 	DEFINE_SCRIPTFUNC( GetPrimaryAmmoCount, "Current primary ammo count if no clip is used or to give a player if they pick up this weapon legacy style (not TF)" )
 	DEFINE_SCRIPTFUNC( GetSecondaryAmmoCount, "Current secondary ammo count if no clip is used or to give a player if they pick up this weapon legacy style (not TF)" )
+	DEFINE_SCRIPTFUNC( SendWeaponAnim, "Sends an animation to the weapon's view model" )
 END_SCRIPTDESC();
 
 ConVar weapon_showproficiency( "weapon_showproficiency", "0" );

@@ -35,6 +35,7 @@
 #include "particle_property.h"
 #include "toolframework/itoolentity.h"
 #include "tier0/threadtools.h"
+#include "vscript_client.h"
 
 class C_Team;
 class IPhysicsObject;
@@ -184,6 +185,9 @@ public:
 	DECLARE_DATADESC();
 	DECLARE_CLIENTCLASS();
 	DECLARE_PREDICTABLE();
+#ifdef JBMOD
+	DECLARE_ENT_SCRIPTDESC();
+#endif
 
 									C_BaseEntity();
 	virtual							~C_BaseEntity();
@@ -1708,6 +1712,14 @@ protected:
 	RenderMode_t m_PreviousRenderMode;
 	color32 m_PreviousRenderColor;
 #endif
+
+#ifdef JBMOD
+public:
+	HSCRIPT						GetScriptInstance();
+protected:
+	HSCRIPT						m_hScriptInstance;
+	string_t					m_iszScriptId;
+#endif // JBMOD
 
 private:
 	bool	m_bOldShouldDraw;
