@@ -18,11 +18,13 @@
 #include "igamesystem.h"
 #include "icommandline.h"
 #include "client_factorylist.h"
+#include "daslang_vscript.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 IScriptManager *scriptmanager = NULL;
+IDaslangVM *g_pDaslangVM = NULL;
 
 class CScriptGameSystem : public CAutoGameSystem
 {
@@ -37,6 +39,12 @@ public:
 		if ( factories.appSystemFactory && !CommandLine()->CheckParm( "-noscripting" ) )
 		{
 			scriptmanager = (IScriptManager *)factories.appSystemFactory( VSCRIPT_INTERFACE_VERSION, NULL );
+			
+			// Also try to get the Daslang VM if available
+			if ( scriptmanager )
+			{
+				g_pDaslangVM = (IDaslangVM *)scriptmanager->QueryInterface( DASLANG_INTERFACE_VERSION );
+			}
 		}
 
 		return true;
@@ -48,11 +56,22 @@ public:
 		{
 			//g_pScriptVM->RegisterInstance( &g_ScriptVGUI, "vgui" );
 		}
+		
+		if ( g_pDaslangVM )
+		{
+			// Register Daslang-specific instances here if needed
+		}
 	}
 
 	virtual void LevelShutdownPreEntity()
 	{
 		//g_ScriptVGUI.DestroyAllPanels();
+		
+		if ( g_pDaslangVM )
+		{
+			g_pDaslangVM->Shutdown();
+			g_pDaslangVM = NULL;
+		}
 	}
 };
 
