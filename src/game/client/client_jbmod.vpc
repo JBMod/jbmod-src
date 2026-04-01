@@ -13,7 +13,7 @@ $Configuration
 {
 		$Compiler
 		{
-			$AdditionalIncludeDirectories		"$BASE;jbmod\ui,.\jbmod,$SRCDIR\game\shared\jbmod,.\hl2,.\hl2\elements,$SRCDIR\game\shared\hl2,$SRCDIR\game\shared\episodic,$SRCDIR\src\public\vscript"
+		$AdditionalIncludeDirectories		"$BASE;jbmodui,.jbmod,$SRCDIRgamesharedjbmod,.hl2,.hl2elements,$SRCDIRgamesharedhl2,$SRCDIRgamesharedepisodic,$SRCDIRsrcpublic"
 			$PreprocessorDefinitions			"$BASE;JBMOD;HL2MP;HL2_CLIENT_DLL;HL2_EPISODIC;NEXT_BOT"
 		}
 }
