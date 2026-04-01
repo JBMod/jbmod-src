@@ -12,11 +12,11 @@ $Include "$SRCDIR\game\server\nav_mesh.vpc"
 
 $Configuration
 {
-	$Compiler
-	{
-		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\game\shared\hl2,.\hl2,.\jbmod,.\episodic,$SRCDIR\game\shared\jbmod,$SRCDIR\game\shared\episodic,$SRCDIR\daScript\include,$SRCDIR\daScript\include\daScript"
-		$PreprocessorDefinitions		"$BASE;JBMOD;HL2MP;HL2_DLL;HL2_EPISODIC;NEXT_BOT;ENABLE_DASLANG"
-	}
+		$Compiler
+		{
+			$AdditionalIncludeDirectories	"$BASE;$SRCDIR\game\shared\hl2,.\hl2,.\jbmod,.\episodic,$SRCDIR\game\shared\jbmod,$SRCDIR\game\shared\episodic,$SRCDIR\daScript\include,$SRCDIR\daScript\include\daScript,$SRCDIR\src\public\vscript"
+			$PreprocessorDefinitions		"$BASE;JBMOD;HL2MP;HL2_DLL;HL2_EPISODIC;NEXT_BOT;ENABLE_DASLANG"
+		}
 }
 
 $Project "Server (JBMod)"
