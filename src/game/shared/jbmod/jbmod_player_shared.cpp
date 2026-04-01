@@ -19,6 +19,7 @@
 #include "SoundEmitterSystem/isoundemittersystembase.h"
 
 extern ConVar sv_footsteps;
+ConVar sv_material_footsteps("sv_material_footsteps", "1", FCVAR_REPLICATED, "0: HL2DM Footsteps, 1: Material Footsteps");
 
 const char *g_ppszPlayerSoundPrefixNames[PLAYER_SOUNDS_MAX] =
 {
@@ -70,6 +71,12 @@ Vector CJBMod_Player::GetAttackSpread( CBaseCombatWeapon *pWeapon, CBaseEntity *
 //-----------------------------------------------------------------------------
 void CJBMod_Player::PlayStepSound( Vector &vecOrigin, surfacedata_t *psurface, float fvol, bool force )
 {
+	if (sv_material_footsteps.GetBool())
+	{
+		BaseClass::PlayStepSound(vecOrigin, psurface, fvol, force);
+		return;
+	}
+
 	if ( gpGlobals->maxClients > 1 && !sv_footsteps.GetFloat() )
 		return;
 
