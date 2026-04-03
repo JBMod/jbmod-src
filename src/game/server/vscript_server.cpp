@@ -38,6 +38,10 @@
 #include "bot/tf_bot.h"
 #endif
 
+#ifdef JBMOD
+#include "jbmod/jbmod_gamerules.h"
+#endif
+
 #if defined( _WIN32 ) || defined( POSIX )
 #include "vscript_server_nut.h"
 #endif
@@ -101,6 +105,7 @@ public:
 	ScriptVariant_t GetStr( const char *cvar );
 	const char *GetClientConvarValue( const char *cvar, int entindex );
 	void SetValue( const char *cvar, ScriptVariant_t value );
+	void SetDefault( const char *cvar, const char *value );
 
 	void LevelInitPreEntity() OVERRIDE;
 	void LevelShutdownPostEntity() OVERRIDE;
@@ -232,6 +237,28 @@ void CScriptConvarAccessor::SetValue( const char *cvar, ScriptVariant_t value )
 	}
 }
 
+void CScriptConvarAccessor::SetDefault( const char *cvar, const char *value )
+{
+	if ( !cvar || !*cvar || !value )
+		return;
+
+	if ( !IsConVarOnAllowList( cvar ) )
+	{
+		DevMsg( "Convar %s was not in " VSCRIPT_CONVAR_ALLOWLIST_NAME "\n", cvar );
+		return;
+	}
+
+	ConVarRef cref( cvar );
+	if ( cref.IsValid() && !cref.IsFlagSet( FCVAR_SCRIPT_NONO ) )
+	{
+		if ( Q_strcmp( cref.GetString(), cref.GetDefault() ) == 0 )
+		{
+			cref.SetValue( value );
+			GameRules()->SaveConvar( cref );
+		}
+	}
+}
+
 void CScriptConvarAccessor::LevelInitPreEntity()
 {
 	m_AllowedConVars.RemoveAll();
@@ -275,6 +302,7 @@ DEFINE_SCRIPTFUNC( GetFloat, "GetFloat(name) : returns the convar as a float. Ma
 DEFINE_SCRIPTFUNC( GetStr, "GetStr(name) : returns the convar as a string. May return null if no such convar." )
 DEFINE_SCRIPTFUNC( GetClientConvarValue, "GetClientConvarValue(name) : returns the convar value for the entindex as a string." )
 DEFINE_SCRIPTFUNC( SetValue, "SetValue(name, value) : sets the value of the convar. The convar must be in " VSCRIPT_CONVAR_ALLOWLIST_NAME " to be set. Supported types are bool, int, float, string." )
+DEFINE_SCRIPTFUNC( SetDefault, "SetDefault(name, value) : sets the value of the convar only if it has not changed from its default." )
 DEFINE_SCRIPTFUNC( IsConVarOnAllowList, "IsConVarOnAllowList(name) : checks if the convar is allowed to be used and is in " VSCRIPT_CONVAR_ALLOWLIST_NAME ". Please be nice with this and use it for *compatibility* if you need check support and NOT to force server owners to allow hostname to be set... or else this will simply lie and return true in future. ;-) You have been warned!"  )
 END_SCRIPTDESC()
 
@@ -2650,7 +2678,6 @@ bool VScriptServerInit()
 #define DECLARE_SCRIPT_CONST_NAMED( type, name, x ) g_pScriptVM->SetValue( (HSCRIPT)vConstantsTable_##type, name, x );
 #define DECLARE_SCRIPT_CONST( type, x ) DECLARE_SCRIPT_CONST_NAMED( type, #x, x )
 #define REGISTER_SCRIPT_CONST_TABLE( x ) g_pScriptVM->SetValue( (HSCRIPT) vConstantsTable, #x, vConstantsTable_##x );
-#ifdef TF_DLL
 DECLARE_SCRIPT_CONST_TABLE( EScriptRecipientFilter )
 DECLARE_SCRIPT_CONST( EScriptRecipientFilter, RECIPIENT_FILTER_DEFAULT )
 DECLARE_SCRIPT_CONST( EScriptRecipientFilter, RECIPIENT_FILTER_PAS_ATTENUATION )
@@ -2661,6 +2688,7 @@ DECLARE_SCRIPT_CONST( EScriptRecipientFilter, RECIPIENT_FILTER_GLOBAL )
 DECLARE_SCRIPT_CONST( EScriptRecipientFilter, RECIPIENT_FILTER_TEAM )
 REGISTER_SCRIPT_CONST_TABLE( EScriptRecipientFilter )
 
+#ifdef TF_DLL
 DECLARE_SCRIPT_CONST_TABLE( ETFCond )
 DECLARE_SCRIPT_CONST( ETFCond, TF_COND_INVALID )
 DECLARE_SCRIPT_CONST( ETFCond, TF_COND_AIMING )
@@ -2905,6 +2933,7 @@ DECLARE_SCRIPT_CONST( FNavAttributeType, NAV_MESH_FUNC_COST )
 DECLARE_SCRIPT_CONST( FNavAttributeType, NAV_MESH_HAS_ELEVATOR )
 DECLARE_SCRIPT_CONST( FNavAttributeType, NAV_MESH_NAV_BLOCKER )
 REGISTER_SCRIPT_CONST_TABLE( FNavAttributeType )
+#endif // TF_DLL
 
 DECLARE_SCRIPT_CONST_TABLE( FButtons )
 DECLARE_SCRIPT_CONST( FButtons, IN_ATTACK )
@@ -2948,15 +2977,18 @@ DECLARE_SCRIPT_CONST( FHideHUD, HIDEHUD_CROSSHAIR )
 DECLARE_SCRIPT_CONST( FHideHUD, HIDEHUD_VEHICLE_CROSSHAIR )
 DECLARE_SCRIPT_CONST( FHideHUD, HIDEHUD_INVEHICLE )
 DECLARE_SCRIPT_CONST( FHideHUD, HIDEHUD_BONUS_PROGRESS )
+#ifdef TF_DLL
 DECLARE_SCRIPT_CONST( FHideHUD, HIDEHUD_BUILDING_STATUS )
 DECLARE_SCRIPT_CONST( FHideHUD, HIDEHUD_CLOAK_AND_FEIGN )
 DECLARE_SCRIPT_CONST( FHideHUD, HIDEHUD_PIPES_AND_CHARGE )
 DECLARE_SCRIPT_CONST( FHideHUD, HIDEHUD_METAL )
 DECLARE_SCRIPT_CONST( FHideHUD, HIDEHUD_TARGET_ID )
 DECLARE_SCRIPT_CONST( FHideHUD, HIDEHUD_MATCH_STATUS )
+#endif
 DECLARE_SCRIPT_CONST( FHideHUD, HIDEHUD_BITCOUNT )
 REGISTER_SCRIPT_CONST_TABLE( FHideHUD )
 
+#ifdef TF_DLL
 DECLARE_SCRIPT_CONST_TABLE( FTaunts )
 DECLARE_SCRIPT_CONST( FTaunts, TAUNT_BASE_WEAPON )
 DECLARE_SCRIPT_CONST( FTaunts, TAUNT_MISC_ITEM )
@@ -2964,6 +2996,7 @@ DECLARE_SCRIPT_CONST( FTaunts, TAUNT_SHOW_ITEM )
 DECLARE_SCRIPT_CONST( FTaunts, TAUNT_LONG )
 DECLARE_SCRIPT_CONST( FTaunts, TAUNT_SPECIAL )
 REGISTER_SCRIPT_CONST_TABLE( FTaunts )
+#endif
 
 DECLARE_SCRIPT_CONST_TABLE( EHitGroup )
 DECLARE_SCRIPT_CONST( EHitGroup, HITGROUP_GENERIC )
@@ -3285,6 +3318,7 @@ DECLARE_SCRIPT_CONST( EMoveCollide, MOVECOLLIDE_COUNT )
 DECLARE_SCRIPT_CONST( EMoveCollide, MOVECOLLIDE_MAX_BITS )
 REGISTER_SCRIPT_CONST_TABLE( EMoveCollide )
 
+#ifdef TF_DLL
 // Unnamed enum
 DECLARE_SCRIPT_CONST_TABLE( ETFTeam )
 DECLARE_SCRIPT_CONST( ETFTeam, TEAM_ANY )
@@ -3481,6 +3515,7 @@ DECLARE_SCRIPT_CONST( FTFNavAttributeType, TF_NAV_DOOR_ALWAYS_BLOCKS )
 DECLARE_SCRIPT_CONST( FTFNavAttributeType, TF_NAV_UNBLOCKABLE )
 DECLARE_SCRIPT_CONST( FTFNavAttributeType, TF_NAV_PERSISTENT_ATTRIBUTES )
 REGISTER_SCRIPT_CONST_TABLE( FTFNavAttributeType )
+#endif // TF_DLL
 
 DECLARE_SCRIPT_CONST_TABLE( EHudNotify )
 DECLARE_SCRIPT_CONST( EHudNotify, HUD_PRINTNOTIFY )
@@ -3489,9 +3524,11 @@ DECLARE_SCRIPT_CONST( EHudNotify, HUD_PRINTTALK )
 DECLARE_SCRIPT_CONST( EHudNotify, HUD_PRINTCENTER )
 REGISTER_SCRIPT_CONST_TABLE( EHudNotify )
 
+#ifdef TF_DLL
 DECLARE_SCRIPT_CONST_TABLE( EBotType )
 DECLARE_SCRIPT_CONST( EBotType, TF_BOT_TYPE )
 REGISTER_SCRIPT_CONST_TABLE( EBotType )
+#endif
 
 DECLARE_SCRIPT_CONST_TABLE( Math )
 DECLARE_SCRIPT_CONST_NAMED( Math, "Epsilon", FLT_EPSILON)
@@ -3505,13 +3542,30 @@ DECLARE_SCRIPT_CONST_NAMED( Math, "Sqrt3", 1.732050808f)
 DECLARE_SCRIPT_CONST_NAMED( Math, "GoldenRatio", 1.618033989f)
 REGISTER_SCRIPT_CONST_TABLE( Math )
 
+DECLARE_SCRIPT_CONST_TABLE( ETeam )
+DECLARE_SCRIPT_CONST( ETeam, TEAM_UNASSIGNED )
+DECLARE_SCRIPT_CONST( ETeam, TEAM_SPECTATOR )
+#ifdef JBMOD
+DECLARE_SCRIPT_CONST( ETeam, TEAM_COMBINE )
+DECLARE_SCRIPT_CONST( ETeam, TEAM_REBELS )
+#endif
+REGISTER_SCRIPT_CONST_TABLE( ETeam )
+
+DECLARE_SCRIPT_CONST_TABLE( ERelationship )
+DECLARE_SCRIPT_CONST( ERelationship, GR_NOTTEAMMATE )
+DECLARE_SCRIPT_CONST( ERelationship, GR_TEAMMATE )
+DECLARE_SCRIPT_CONST( ERelationship, GR_ENEMY )
+DECLARE_SCRIPT_CONST( ERelationship, GR_ALLY )
+DECLARE_SCRIPT_CONST( ERelationship, GR_NEUTRAL )
+REGISTER_SCRIPT_CONST_TABLE( ERelationship )
+
 DECLARE_SCRIPT_CONST_TABLE( Server )
 DECLARE_SCRIPT_CONST( Server, MAX_EDICTS )
 DECLARE_SCRIPT_CONST( Server, MAX_PLAYERS )
 DECLARE_SCRIPT_CONST( Server, DIST_EPSILON )
+DECLARE_SCRIPT_CONST( Server, DEATH_ANIMATION_TIME )
 DECLARE_SCRIPT_CONST_NAMED( Server, "ConstantNamingConvention", "Constants are named as follows: F -> flags, E -> enums, (nothing) -> random values/constants" )
 REGISTER_SCRIPT_CONST_TABLE( Server )
-#endif
 				g_pScriptVM->SetValue( "Constants", vConstantsTable );
 				
 				g_pScriptVM->SetValue( "CLIENT", false );

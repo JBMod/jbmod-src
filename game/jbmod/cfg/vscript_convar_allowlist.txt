@@ -51,4 +51,6 @@ vscript_convar_allowlist
     
     // Other
     sv_alltalk                                                        allowed
+    sv_jbmod_weapon_respawn_time                                      allowed
+    sv_jbmod_item_respawn_time                                        allowed
 }

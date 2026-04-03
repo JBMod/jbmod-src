@@ -41,11 +41,10 @@ extern bool FindInList( const char **pStrings, const char *pToFind );
 ConVar sv_jbmod_weapon_respawn_time( "sv_jbmod_weapon_respawn_time", "20", FCVAR_GAMEDLL | FCVAR_NOTIFY );
 ConVar sv_jbmod_item_respawn_time( "sv_jbmod_item_respawn_time", "30", FCVAR_GAMEDLL | FCVAR_NOTIFY );
 ConVar sv_report_client_settings("sv_report_client_settings", "0", FCVAR_GAMEDLL | FCVAR_NOTIFY );
+ConVar sv_fov_min( "sv_fov_min", "75", FCVAR_GAMEDLL, "Minimum allowed FOV for players." );
+ConVar sv_fov_max( "sv_fov_max", "90", FCVAR_GAMEDLL, "Maximum allowed FOV for players." );
 
 extern ConVar mp_chattime;
-
-extern CBaseEntity	 *g_pLastCombineSpawn;
-extern CBaseEntity	 *g_pLastRebelSpawn;
 
 #define WEAPON_MAX_DISTANCE_FROM_SPAWN 64
 
@@ -87,11 +86,14 @@ static JBModViewVectors g_JBModViewVectors(
 	Vector( 16,  16,  60 )	  //VEC_CROUCH_TRACE_MAX (m_vCrouchTraceMax)
 );
 
+#ifndef CLIENT_DLL
+
 static const char *s_PreserveEnts[] =
 {
 	"ai_network",
 	"ai_hint",
 	"jbmod_gamerules",
+	"jbmod_logic_gamemode",
 	"team_manager",
 	"player_manager",
 	"env_soundscape",
@@ -110,8 +112,6 @@ static const char *s_PreserveEnts[] =
 	"info_target",
 	"info_node_hint",
 	"info_player_deathmatch",
-	"info_player_combine",
-	"info_player_rebel",
 	"info_map_parameters",
 	"keyframe_rope",
 	"move_rope",
@@ -130,7 +130,22 @@ static const char *s_PreserveEnts[] =
 	"", // END Marker
 };
 
+static CUtlVector<CUtlString> s_ExtraPreserveEnts;
 
+static bool IsPreservedEntity( const char *pClassname )
+{
+	if ( FindInList( s_PreserveEnts, pClassname ) )
+		return true;
+
+	for ( int i = 0; i < s_ExtraPreserveEnts.Count(); i++ )
+	{
+		if ( !Q_stricmp( s_ExtraPreserveEnts[i].Get(), pClassname ) )
+			return true;
+	}
+	return false;
+}
+
+#endif // CLIENT_DLL
 
 #ifdef CLIENT_DLL
 	void RecvProxy_JBModRules( const RecvProp *pProp, void **pOut, void *pData, int objectID )
@@ -237,9 +252,6 @@ void CJBModRules::CreateStandardEntities( void )
 
 	BaseClass::CreateStandardEntities();
 
-	g_pLastCombineSpawn = NULL;
-	g_pLastRebelSpawn = NULL;
-
 #ifdef DBGFLAG_ASSERT
 	CBaseEntity *pEnt = 
 #endif
@@ -255,19 +267,23 @@ void CJBModRules::CreateStandardEntities( void )
 float CJBModRules::FlWeaponRespawnTime( CBaseCombatWeapon *pWeapon )
 {
 #ifndef CLIENT_DLL
-	if ( weaponstay.GetInt() > 0 )
+	if ( g_pScriptVM )
 	{
-		// make sure it's only certain weapons
-		if ( !(pWeapon->GetWeaponFlags() & ITEM_FLAG_LIMITINWORLD) )
+		HSCRIPT hFunction = g_pScriptVM->LookupFunction( "GetWeaponRespawnTime" );
+		if ( hFunction )
 		{
-			return 0;		// weapon respawns almost instantly
+			bool bLimitInWorld = ( pWeapon->GetWeaponFlags() & ITEM_FLAG_LIMITINWORLD ) != 0;
+			ScriptVariant_t result;
+			g_pScriptVM->Call( hFunction, NULL, true, &result, pWeapon->GetClassname(), bLimitInWorld );
+			g_pScriptVM->ReleaseFunction( hFunction );
+
+			if ( result.GetType() == FIELD_FLOAT || result.GetType() == FIELD_INTEGER )
+				return (float)result;
 		}
 	}
-
-	return sv_jbmod_weapon_respawn_time.GetFloat();
 #endif
 
-	return 0;		// weapon respawns almost instantly
+	return 0;
 }
 
 
@@ -312,41 +328,13 @@ void CJBModRules::Think( void )
 		return;
 	}
 
-//	float flTimeLimit = mp_timelimit.GetFloat() * 60;
-	float flFragLimit = fraglimit.GetFloat();
-	
-	if ( GetMapRemainingTime() < 0 )
+	if ( g_pScriptVM )
 	{
-		GoToIntermission();
-		return;
-	}
-
-	if ( flFragLimit )
-	{
-		if( IsTeamplay() == true )
+		HSCRIPT hFunction = g_pScriptVM->LookupFunction( "OnThink" );
+		if ( hFunction )
 		{
-			CTeam *pCombine = g_Teams[TEAM_COMBINE];
-			CTeam *pRebels = g_Teams[TEAM_REBELS];
-
-			if ( pCombine->GetScore() >= flFragLimit || pRebels->GetScore() >= flFragLimit )
-			{
-				GoToIntermission();
-				return;
-			}
-		}
-		else
-		{
-			// check if any player is over the frag limit
-			for ( int i = 1; i <= gpGlobals->maxClients; i++ )
-			{
-				CBasePlayer *pPlayer = UTIL_PlayerByIndex( i );
-
-				if ( pPlayer && pPlayer->FragCount() >= flFragLimit )
-				{
-					GoToIntermission();
-					return;
-				}
-			}
+			g_pScriptVM->Call( hFunction, NULL, true, NULL );
+			g_pScriptVM->ReleaseFunction( hFunction );
 		}
 	}
 
@@ -381,6 +369,16 @@ void CJBModRules::GoToIntermission( void )
 #ifndef CLIENT_DLL
 	if ( g_fGameOver )
 		return;
+
+	if ( g_pScriptVM )
+	{
+		HSCRIPT hFunction = g_pScriptVM->LookupFunction( "OnRoundEnd" );
+		if ( hFunction )
+		{
+			g_pScriptVM->Call( hFunction, NULL, true, NULL );
+			g_pScriptVM->ReleaseFunction( hFunction );
+		}
+	}
 
 	g_fGameOver = true;
 
@@ -596,7 +594,21 @@ QAngle CJBModRules::VecItemRespawnAngles( CItem *pItem )
 //=========================================================
 float CJBModRules::FlItemRespawnTime( CItem *pItem )
 {
-	return sv_jbmod_item_respawn_time.GetFloat();
+	if ( g_pScriptVM )
+	{
+		HSCRIPT hFunction = g_pScriptVM->LookupFunction( "GetItemRespawnTime" );
+		if ( hFunction )
+		{
+			ScriptVariant_t result;
+			g_pScriptVM->Call( hFunction, NULL, true, &result, pItem->GetClassname() );
+			g_pScriptVM->ReleaseFunction( hFunction );
+
+			if ( result.GetType() == FIELD_FLOAT || result.GetType() == FIELD_INTEGER )
+				return (float)result;
+		}
+	}
+
+	return 0.0f;
 }
 
 
@@ -606,13 +618,46 @@ float CJBModRules::FlItemRespawnTime( CItem *pItem )
 //=========================================================
 bool CJBModRules::CanHavePlayerItem( CBasePlayer *pPlayer, CBaseCombatWeapon *pItem )
 {
-	if ( weaponstay.GetInt() > 0 )
+	if ( g_pScriptVM )
 	{
-		if ( pPlayer->Weapon_OwnsThisType( pItem->GetClassname(), pItem->GetSubType() ) )
-			 return false;
+		HSCRIPT hFunction = g_pScriptVM->LookupFunction( "CanPickupWeapon" );
+		if ( hFunction )
+		{
+			bool bOwnsWeapon = pPlayer->Weapon_OwnsThisType( pItem->GetClassname(), pItem->GetSubType() ) != NULL;
+			ScriptVariant_t result;
+			g_pScriptVM->Call( hFunction, NULL, true, &result,
+				pPlayer->GetScriptInstance(),
+				pItem->GetClassname(),
+				bOwnsWeapon );
+			g_pScriptVM->ReleaseFunction( hFunction );
+
+			if ( result.GetType() == FIELD_BOOLEAN )
+				return (bool)result;
+		}
 	}
 
 	return BaseClass::CanHavePlayerItem( pPlayer, pItem );
+}
+
+float CJBModRules::FlPlayerFallDamage( CBasePlayer *pPlayer )
+{
+	if ( g_pScriptVM )
+	{
+		HSCRIPT hFunction = g_pScriptVM->LookupFunction( "GetFallDamage" );
+		if ( hFunction )
+		{
+			ScriptVariant_t result;
+			g_pScriptVM->Call( hFunction, NULL, true, &result,
+				pPlayer->GetScriptInstance(),
+				pPlayer->m_Local.m_flFallVelocity );
+			g_pScriptVM->ReleaseFunction( hFunction );
+
+			if ( result.GetType() == FIELD_FLOAT || result.GetType() == FIELD_INTEGER )
+				return (float)result;
+		}
+	}
+
+	return BaseClass::FlPlayerFallDamage( pPlayer );
 }
 
 #endif
@@ -624,6 +669,20 @@ bool CJBModRules::CanHavePlayerItem( CBasePlayer *pPlayer, CBaseCombatWeapon *pI
 int CJBModRules::WeaponShouldRespawn( CBaseCombatWeapon *pWeapon )
 {
 #ifndef CLIENT_DLL
+	if ( g_pScriptVM )
+	{
+		HSCRIPT hFunction = g_pScriptVM->LookupFunction( "ShouldWeaponRespawn" );
+		if ( hFunction )
+		{
+			ScriptVariant_t result;
+			g_pScriptVM->Call( hFunction, NULL, true, &result, pWeapon->GetClassname() );
+			g_pScriptVM->ReleaseFunction( hFunction );
+
+			if ( result.GetType() == FIELD_BOOLEAN )
+				return (bool)result ? GR_WEAPON_RESPAWN_YES : GR_WEAPON_RESPAWN_NO;
+		}
+	}
+
 	if ( pWeapon->HasSpawnFlags( SF_NORESPAWN ) )
 	{
 		return GR_WEAPON_RESPAWN_NO;
@@ -652,6 +711,16 @@ void CJBModRules::ClientDisconnected( edict_t *pClient )
 
 		if ( pPlayer->IsInAVehicle() )
 			pPlayer->LeaveVehicle();
+
+		if ( g_pScriptVM )
+		{
+			HSCRIPT hFunction = g_pScriptVM->LookupFunction( "OnPlayerDisconnect" );
+			if ( hFunction )
+			{
+				g_pScriptVM->Call( hFunction, NULL, true, NULL, pPlayer->GetScriptInstance() );
+				g_pScriptVM->ReleaseFunction( hFunction );
+			}
+		}
 	}
 
 	BaseClass::ClientDisconnected( pClient );
@@ -789,26 +858,13 @@ void CJBModRules::ClientSettingsChanged( CBasePlayer *pPlayer )
 			return;
 		}
 
-		if ( JBModRules()->IsTeamplay() == false )
+		if ( g_pScriptVM )
 		{
-			pHL2Player->SetPlayerModel();
-
-			const char *pszCurrentModelName = modelinfo->GetModelName( pHL2Player->GetModel() );
-
-			char szReturnString[128];
-			Q_snprintf( szReturnString, sizeof( szReturnString ), "Your player model is: %s\n", pszCurrentModelName );
-
-			ClientPrint( pHL2Player, HUD_PRINTTALK, szReturnString );
-		}
-		else
-		{
-			if ( Q_stristr( szModelName, "models/human") )
+			HSCRIPT hFunction = g_pScriptVM->LookupFunction( "OnPlayerModelChanged" );
+			if ( hFunction )
 			{
-				pHL2Player->ChangeTeam( TEAM_REBELS );
-			}
-			else
-			{
-				pHL2Player->ChangeTeam( TEAM_COMBINE );
+				g_pScriptVM->Call( hFunction, NULL, true, NULL, pHL2Player->GetScriptInstance(), szModelName );
+				g_pScriptVM->ReleaseFunction( hFunction );
 			}
 		}
 	}
@@ -820,8 +876,10 @@ void CJBModRules::ClientSettingsChanged( CBasePlayer *pPlayer )
 	const char *pszFov = engine->GetClientConVarValue( pHL2Player->entindex(), "fov_desired" );
 	if ( pszFov )
 	{
+		static ConVarRef sv_fov_min( "sv_fov_min" );
+		static ConVarRef sv_fov_max( "sv_fov_max" );
 		int iFov = atoi( pszFov );
-		iFov = clamp( iFov, 75, 90 );
+		iFov = clamp( iFov, sv_fov_min.GetInt(), sv_fov_max.GetInt() );
 		pHL2Player->SetDefaultFOV( iFov );
 	}
 
@@ -833,14 +891,23 @@ void CJBModRules::ClientSettingsChanged( CBasePlayer *pPlayer )
 int CJBModRules::PlayerRelationship( CBaseEntity *pPlayer, CBaseEntity *pTarget )
 {
 #ifndef CLIENT_DLL
-	// half life multiplay has a simple concept of Player Relationships.
-	// you are either on another player's team, or you are not.
-	if ( !pPlayer || !pTarget || !pTarget->IsPlayer() || IsTeamplay() == false )
+	if ( !pPlayer || !pTarget || !pTarget->IsPlayer() )
 		return GR_NOTTEAMMATE;
 
-	if ( (*GetTeamID(pPlayer) != '\0') && (*GetTeamID(pTarget) != '\0') && !stricmp( GetTeamID(pPlayer), GetTeamID(pTarget) ) )
+	if ( g_pScriptVM )
 	{
-		return GR_TEAMMATE;
+		HSCRIPT hFunction = g_pScriptVM->LookupFunction( "GetPlayerRelationship" );
+		if ( hFunction )
+		{
+			ScriptVariant_t result;
+			g_pScriptVM->Call( hFunction, NULL, true, &result,
+				ToHScript( pPlayer ),
+				ToHScript( pTarget ) );
+			g_pScriptVM->ReleaseFunction( hFunction );
+
+			if ( result.GetType() == FIELD_INTEGER )
+				return (int)result;
+		}
 	}
 #endif
 
@@ -882,37 +949,6 @@ void CJBModRules::Precache( void )
 {
 	CBaseEntity::PrecacheScriptSound( "AlyxEmp.Charge" );
 }
-
-#ifdef GAME_DLL
-bool CJBModRules::IsOfficialMap( void )
-{ 
-	static const char *s_OfficialMaps[] =
-	{
-		"devtest",
-		"dm_lockdown",
-		"dm_overwatch",
-		"dm_powerhouse",
-		"dm_resistance",
-		"dm_runoff",
-		"dm_steamlab",
-		"dm_underpass",
-		"halls3",
-	};
-
-	char szCurrentMap[MAX_MAP_NAME];
-	Q_strncpy( szCurrentMap, STRING( gpGlobals->mapname ), sizeof( szCurrentMap ) );
-
-	for ( int i = 0; i < ARRAYSIZE( s_OfficialMaps ); ++i )
-	{
-		if ( !Q_stricmp( s_OfficialMaps[i], szCurrentMap ) )
-		{
-			return true;
-		}
-	}
-
-	return BaseClass::IsOfficialMap();
-}
-#endif
 
 bool CJBModRules::ShouldCollide( int collisionGroup0, int collisionGroup1 )
 {
@@ -1075,6 +1111,16 @@ void CJBModRules::RestartGame()
 
 		gameeventmanager->FireEvent( event );
 	}
+
+	if ( g_pScriptVM )
+	{
+		HSCRIPT hFunction = g_pScriptVM->LookupFunction( "OnRoundStart" );
+		if ( hFunction )
+		{
+			g_pScriptVM->Call( hFunction, NULL, true, NULL );
+			g_pScriptVM->ReleaseFunction( hFunction );
+		}
+	}
 }
 
 #ifdef GAME_DLL
@@ -1103,7 +1149,7 @@ void CJBModRules::CleanUpMap()
 			}
 		}
 		// remove entities that has to be restored on roundrestart (breakables etc)
-		else if ( !FindInList( s_PreserveEnts, pCur->GetClassname() ) )
+		else if ( !IsPreservedEntity( pCur->GetClassname() ) )
 		{
 			UTIL_Remove( pCur );
 		}
@@ -1125,7 +1171,7 @@ void CJBModRules::CleanUpMap()
 		virtual bool ShouldCreateEntity( const char *pClassname )
 		{
 			// Don't recreate the preserved entities.
-			if ( !FindInList( s_PreserveEnts, pClassname ) )
+			if ( !IsPreservedEntity( pClassname ) )
 			{
 				return true;
 			}
@@ -1331,11 +1377,133 @@ static const char *ScriptGetGameMode()
 	return "";
 }
 
+static void ScriptGoToIntermission()
+{
+	if ( JBModRules() )
+	{
+		JBModRules()->GoToIntermission();
+	}
+}
+
+static bool ScriptIsGameOver()
+{
+	return g_fGameOver;
+}
+
+static float ScriptGetMapRemainingTime()
+{
+	if ( JBModRules() )
+	{
+		return JBModRules()->GetMapRemainingTime();
+	}
+	return -1;
+}
+
+static bool ScriptIsTeamplay()
+{
+	if ( JBModRules() )
+	{
+		return JBModRules()->IsTeamplay();
+	}
+	return false;
+}
+
+static void ScriptPrecacheModel( const char *szModel )
+{
+	if ( szModel && szModel[0] )
+	{
+		CBaseEntity::PrecacheModel( szModel );
+	}
+}
+
+static void ScriptPrecacheSound( const char *szSound )
+{
+	if ( szSound && szSound[0] )
+	{
+		CBaseEntity::PrecacheScriptSound( szSound );
+	}
+}
+
+static HSCRIPT ScriptGetPlayerByIndex( int index )
+{
+	CBasePlayer *pPlayer = UTIL_PlayerByIndex( index );
+	if ( pPlayer )
+		return pPlayer->GetScriptInstance();
+	return NULL;
+}
+
+static int ScriptGetMaxPlayers()
+{
+	return gpGlobals->maxClients;
+}
+
+static int ScriptGetTeamScore( int team )
+{
+	if ( team >= 0 && team < g_Teams.Count() )
+		return g_Teams[team]->GetScore();
+	return 0;
+}
+
+static int ScriptGetTeamPlayerCount( int team )
+{
+	if ( team >= 0 && team < g_Teams.Count() )
+		return g_Teams[team]->GetNumPlayers();
+	return 0;
+}
+
+static const char *ScriptGetMapName()
+{
+	return STRING( gpGlobals->mapname );
+}
+
+static const char *ScriptGetTeamName( int team )
+{
+	if ( team >= 0 && team < g_Teams.Count() )
+		return g_Teams[team]->GetName();
+	return "";
+}
+
+static void ScriptSetTeamName( int team, const char *pszName )
+{
+	if ( team >= 0 && team < g_Teams.Count() && pszName )
+	{
+		Q_strncpy( g_Teams[team]->m_szTeamname.GetForModify(), pszName, MAX_TEAM_NAME_LENGTH );
+	}
+}
+
+static void ScriptPreserveEntityClass( const char *pszClassname )
+{
+	if ( !pszClassname || !pszClassname[0] )
+		return;
+
+	for ( int i = 0; i < s_ExtraPreserveEnts.Count(); i++ )
+	{
+		if ( !Q_stricmp( s_ExtraPreserveEnts[i].Get(), pszClassname ) )
+			return;
+	}
+
+	s_ExtraPreserveEnts.AddToTail( CUtlString( pszClassname ) );
+}
+
 void CJBModRules::RegisterScriptFunctions()
 {
 	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptSetGameDescription, "SetGameDescription", "Set the game description." );
 	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptGetGameDescription, "GetGameDescription", "Get the current game description." );
 	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptGetGameMode, "GetGameMode", "Get the current game mode name." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptGoToIntermission, "GoToIntermission", "End the game and go to the scoreboard." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsGameOver, "IsGameOver", "Returns true if the game is in intermission." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptGetMapRemainingTime, "GetMapRemainingTime", "Returns seconds remaining on the map timer, or -1 if no limit." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptIsTeamplay, "IsTeamplay", "Returns true if teamplay is enabled." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptPrecacheModel, "PrecacheModel", "Precache a model for use." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptPrecacheSound, "PrecacheSound", "Precache a sound for use." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptGetPlayerByIndex, "GetPlayerByIndex", "Get a player entity by index (1-based)." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptGetMaxPlayers, "GetMaxPlayers", "Get the maximum number of players." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptGetTeamScore, "GetTeamScore", "Get the score for a team by index." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptGetTeamPlayerCount, "GetTeamPlayerCount", "Get the number of players on a team." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptGetMapName, "GetMapName", "Get the current map name." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptGetTeamName, "GetTeamName", "Get the name of a team by index." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptSetTeamName, "SetTeamName", "Set the name of a team by index." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptPreserveEntityClass, "PreserveEntityClass", "Add an entity classname to the round-restart preserve list." );
 }
 
 #endif

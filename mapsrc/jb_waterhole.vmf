@@ -1,8 +1,8 @@
 versioninfo
 {
 	"editorversion" "400"
-	"editorbuild" "8870"
-	"mapversion" "37"
+	"editorbuild" "10427"
+	"mapversion" "38"
 	"formatversion" "100"
 	"prefab" "0"
 }
@@ -15,11 +15,12 @@ viewsettings
 	"bShowGrid" "1"
 	"bShowLogicalGrid" "0"
 	"nGridSpacing" "8"
+	"bShow3DGrid" "0"
 }
 world
 {
 	"id" "0"
-	"mapversion" "37"
+	"mapversion" "38"
 	"classname" "worldspawn"
 	"detailmaterial" "detail/detailsprites"
 	"detailvbsp" "detail.vbsp"
@@ -1019,7 +1020,6 @@ entity
 	editor
 	{
 		"color" "220 30 220"
-		"visgroupid" "3"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 0]"
@@ -1034,8 +1034,6 @@ entity
 	editor
 	{
 		"color" "0 255 0"
-		"visgroupid" "3"
-		"visgroupid" "2"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 500]"
@@ -1051,7 +1049,6 @@ entity
 	editor
 	{
 		"color" "0 0 255"
-		"visgroupid" "3"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 1000]"
@@ -1067,7 +1064,6 @@ entity
 	editor
 	{
 		"color" "220 30 220"
-		"visgroupid" "3"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 1500]"
@@ -1083,7 +1079,6 @@ entity
 	editor
 	{
 		"color" "220 30 220"
-		"visgroupid" "3"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 2000]"
@@ -1091,24 +1086,73 @@ entity
 }
 entity
 {
-	"id" "1803"
-	"classname" "prop_vehicle_airboat"
-	"actionScale" "1"
-	"angles" "0 90 0"
-	"fademindist" "-1"
-	"fadescale" "1"
-	"lightmapresolutionx" "32"
-	"lightmapresolutiony" "32"
-	"model" "models/airboat.mdl"
-	"origin" "504 360 8"
-	"solid" "6"
-	"vehiclescript" "scripts/vehicles/airboat.txt"
+	"id" "1814"
+	"classname" "info_player_start"
+	"angles" "0 180 0"
+	"origin" "544 312 8"
+	editor
+	{
+		"color" "0 255 0"
+		"visgroupshown" "1"
+		"visgroupautoshown" "1"
+		"logicalpos" "[0 500]"
+	}
+}
+entity
+{
+	"id" "1820"
+	"classname" "info_player_start"
+	"angles" "0 180 0"
+	"origin" "544 232 8"
+	editor
+	{
+		"color" "0 255 0"
+		"visgroupshown" "1"
+		"visgroupautoshown" "1"
+		"logicalpos" "[0 500]"
+	}
+}
+entity
+{
+	"id" "1826"
+	"classname" "info_player_start"
+	"angles" "0 180 0"
+	"origin" "544 192 8"
+	editor
+	{
+		"color" "0 255 0"
+		"visgroupshown" "1"
+		"visgroupautoshown" "1"
+		"logicalpos" "[0 500]"
+	}
+}
+entity
+{
+	"id" "1838"
+	"classname" "info_player_start"
+	"angles" "0 180 0"
+	"origin" "544 152 8"
+	editor
+	{
+		"color" "0 255 0"
+		"visgroupshown" "1"
+		"visgroupautoshown" "1"
+		"logicalpos" "[0 500]"
+	}
+}
+entity
+{
+	"id" "1842"
+	"classname" "jbmod_logic_gamemode"
+	"gamemode" "rollerball"
+	"spawnflags" "0"
+	"origin" "0 0 0"
 	editor
 	{
 		"color" "220 30 220"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
-		"logicalpos" "[0 2500]"
+		"logicalpos" "[0 0]"
 	}
 }
 cameras
@@ -1116,21 +1160,13 @@ cameras
 	"activecamera" "0"
 	camera
 	{
-		"position" "[443.354 108.04 121.019]"
-		"look" "[420.522 370.495 82.9345]"
+		"position" "[453.647 -10.2785 138.188]"
+		"look" "[430.815 252.176 100.104]"
 	}
 }
-cordons
+cordon
 {
+	"mins" "(-1024 -1024 -1024)"
+	"maxs" "(1024 1024 1024)"
 	"active" "0"
-	cordon
-	{
-		"name" "cordon"
-		"active" "1"
-		box
-		{
-			"mins" "(99999 99999 99999)"
-			"maxs" "(-99999 -99999 -99999)"
-		}
-	}
 }

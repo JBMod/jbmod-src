@@ -71,8 +71,8 @@ public:
 	virtual bool Weapon_Switch( CBaseCombatWeapon *pWeapon, int viewmodelindex = 0);
 	virtual bool BumpWeapon( CBaseCombatWeapon *pWeapon );
 	virtual void ChangeTeam( int iTeam ) OVERRIDE;
+	virtual void PlayerUse( void );
 	virtual void PickupObject ( CBaseEntity *pObject, bool bLimitMassAndSize );
-	virtual void PlayStepSound( Vector &vecOrigin, surfacedata_t *psurface, float fvol, bool force );
 	virtual void Weapon_Drop( CBaseCombatWeapon *pWeapon, const Vector *pvecTarget = NULL, const Vector *pVelocity = NULL );
 	virtual void UpdateOnRemove( void );
 	virtual void DeathSound( const CTakeDamageInfo &info );
@@ -81,8 +81,6 @@ public:
 	int FlashlightIsOn( void );
 	void FlashlightTurnOn( void );
 	void FlashlightTurnOff( void );
-	void	PrecacheFootStepSounds( void );
-	bool	ValidatePlayerModel( const char *pModel );
 
 	QAngle GetAnimEyeAngles( void ) { return m_angEyeAngles.Get(); }
 
@@ -90,28 +88,43 @@ public:
 
 	void CheatImpulseCommands( int iImpulse );
 	void CreateRagdollEntity( void );
-	void GiveAllItems( void );
-	void GiveDefaultItems( void );
 
 	void NoteWeaponFired( void );
 
 	void ResetAnimation( void );
 	void SetPlayerModel( void );
-	void SetPlayerTeamModel( void );
 	Activity TranslateTeamActivity( Activity ActToTranslate );
 	
 	float GetNextModelChangeTime( void ) { return m_flNextModelChangeTime; }
 	float GetNextTeamChangeTime( void ) { return m_flNextTeamChangeTime; }
 	void  PickDefaultSpawnTeam( void );
-	void  SetupPlayerSoundsByModel( const char *pModelName );
 	bool  CallScriptOnPlayerSpawn( void );
-	const char *GetPlayerModelSoundPrefix( void );
 
 	void ScriptEquipSuit( void ) { EquipSuit(); }
 	HSCRIPT ScriptGiveItem( const char *szItem ) { return ToHScript( GiveNamedItem( szItem ) ); }
 	void ScriptGiveAmmo( int nCount, const char *szAmmoName ) { CBasePlayer::GiveAmmo( nCount, szAmmoName ); }
-
-	int	  GetPlayerModelType( void ) { return m_iPlayerSoundType;	}
+	void ScriptSwitchToWeapon( const char *szWeapon );
+	const char *ScriptGetClientConVar( const char *szCvar );
+	void ScriptRemoveAllItems( void ) { RemoveAllItems( true ); }
+	int ScriptGetFragCount( void ) { return FragCount(); }
+	void ScriptAddFrags( int nCount ) { IncrementFragCount( nCount ); }
+	void ScriptAddTeamScore( int nScore );
+	void ScriptSetPlayerModel( const char *szModel );
+	void ScriptCommitSuicide( void ) { CommitSuicide(); }
+	void ScriptForceRespawn( void ) { Spawn(); }
+	const char *ScriptGetPlayerName( void ) { return GetPlayerName(); }
+	bool ScriptIsAlive( void ) { return IsAlive(); }
+	int ScriptGetDeathCount( void ) { return DeathCount(); }
+	void ScriptAddDeaths( int nCount ) { IncrementDeathCount( nCount ); }
+	int ScriptGetArmorValue( void ) { return ArmorValue(); }
+	void ScriptSetArmorValue( int value ) { SetArmorValue( value ); }
+	void ScriptShowMOTD( void );
+	float ScriptGetDeathTime( void ) { return GetDeathTime(); }
+	void ScriptSetMaxSpeed( float speed ) { SetMaxSpeed( speed ); }
+	void ScriptSetMaxHealth( int health ) { SetMaxHealth( health ); if ( m_iHealth > health ) m_iHealth = health; }
+	int ScriptGetButtons( void ) { return m_nButtons; }
+	const Vector &ScriptGetEyeForward( void );
+	void ScriptShowViewModel( bool bShow ) { ShowViewModel( bShow ); }
 
 	int	GetMaxAmmo( int iAmmoIndex ) const;
 	
@@ -155,9 +168,7 @@ private:
 	CPlayerAnimState   m_PlayerAnimState;
 
 	int m_iLastWeaponFireUsercmd;
-	int m_iModelType;
 	CNetworkVar( int, m_iSpawnInterpCounter );
-	CNetworkVar( int, m_iPlayerSoundType );
 
 	float m_flNextModelChangeTime;
 	float m_flNextTeamChangeTime;

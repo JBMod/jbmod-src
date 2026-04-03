@@ -52,7 +52,6 @@ IMPLEMENT_CLIENTCLASS_DT(C_JBMod_Player, DT_JBMod_Player, CJBMod_Player)
 
 	RecvPropEHandle( RECVINFO( m_hRagdoll ) ),
 	RecvPropInt( RECVINFO( m_iSpawnInterpCounter ) ),
-	RecvPropInt( RECVINFO( m_iPlayerSoundType) ),
 
 	RecvPropBool( RECVINFO( m_fIsWalking ) ),
 END_RECV_TABLE()
@@ -950,6 +949,38 @@ void C_JBMod_Player::CalcView( Vector &eyeOrigin, QAngle &eyeAngles, float &zNea
 			eyeOrigin = trace.endpos;
 		}
 		
+		return;
+	}
+
+	C_BaseEntity *pParent = GetMoveParent();
+	if ( pParent && m_lifeState == LIFE_ALIVE && !IsObserver() )
+	{
+		BaseClass::CalcView( eyeOrigin, eyeAngles, zNear, zFar, fov );
+
+		Vector vOrigin = pParent->GetAbsOrigin();
+		engine->GetViewAngles( eyeAngles );
+
+		Vector vForward;
+		AngleVectors( eyeAngles, &vForward );
+		VectorNormalize( vForward );
+
+		eyeOrigin = vOrigin;
+		eyeOrigin.z += 40.0f;
+		VectorMA( eyeOrigin, -100.0f, vForward, eyeOrigin );
+
+		Vector WALL_MIN( -WALL_OFFSET, -WALL_OFFSET, -WALL_OFFSET );
+		Vector WALL_MAX( WALL_OFFSET, WALL_OFFSET, WALL_OFFSET );
+
+		trace_t trace;
+		C_BaseEntity::PushEnableAbsRecomputations( false );
+		UTIL_TraceHull( vOrigin, eyeOrigin, WALL_MIN, WALL_MAX, MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &trace );
+		C_BaseEntity::PopEnableAbsRecomputations();
+
+		if ( trace.fraction < 1.0f )
+		{
+			eyeOrigin = trace.endpos;
+		}
+
 		return;
 	}
 

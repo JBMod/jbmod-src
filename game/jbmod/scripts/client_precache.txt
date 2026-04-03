@@ -1,0 +1,18 @@
+precache
+{
+	"model"			"models/player.mdl"
+	"model"			"models/gibs/agibs.mdl"
+	"model"			"models/weapons/v_hands.mdl"
+
+	"scriptsound"	"HUDQuickInfo.LowAmmo"
+	"scriptsound"	"HUDQuickInfo.LowHealth"
+
+	"scriptsound"	"FX_AntlionImpact.ShellImpact"
+	"scriptsound"	"Missile.ShotDown"
+	"scriptsound"	"Bullets.DefaultNearmiss"
+	"scriptsound"	"Bullets.GunshipNearmiss"
+	"scriptsound"	"Bullets.StriderNearmiss"
+
+	"scriptsound"	"Geiger.BeepHigh"
+	"scriptsound"	"Geiger.BeepLow"
+}

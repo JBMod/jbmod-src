@@ -129,6 +129,7 @@ public:
 	virtual float	FlItemRespawnTime( CItem *pItem );
 	virtual bool	CanHavePlayerItem( CBasePlayer *pPlayer, CBaseCombatWeapon *pItem );
 	virtual bool FShouldSwitchWeapon( CBasePlayer *pPlayer, CBaseCombatWeapon *pWeapon );
+	virtual float FlPlayerFallDamage( CBasePlayer *pPlayer );
 
 	void	AddLevelDesignerPlacedObject( CBaseEntity *pEntity );
 	void	RemoveLevelDesignerPlacedObject( CBaseEntity *pEntity );
@@ -138,8 +139,6 @@ public:
 
 	virtual void RegisterScriptFunctions();
 #endif
-
-	bool IsOfficialMap( void );
 
 	virtual void ClientDisconnected( edict_t *pClient );
 

@@ -15,6 +15,7 @@
 #include "in_buttons.h"
 #include "jbmod_gamerules.h"
 #include "KeyValues.h"
+#include "viewport_panel_names.h"
 #include "team.h"
 #include "weapon_jbmodbase.h"
 #include "grenade_satchel.h"
@@ -29,11 +30,7 @@
 #include "ilagcompensationmanager.h"
 #include "vscript_server.h"
 
-int g_iLastCitizenModel = 0;
-int g_iLastCombineModel = 0;
 
-CBaseEntity	 *g_pLastCombineSpawn = NULL;
-CBaseEntity	 *g_pLastRebelSpawn = NULL;
 extern CBaseEntity				*g_pLastSpawn;
 
 ConVar jbmod_spawn_frag_fallback_radius( "jbmod_spawn_frag_fallback_radius", "48", FCVAR_NONE, "If no spawns are available, kill players with this radius to allow new players to spawn." );
@@ -87,7 +84,6 @@ IMPLEMENT_SERVERCLASS_ST(CJBMod_Player, DT_JBMod_Player)
 
 	SendPropEHandle( SENDINFO( m_hRagdoll ) ),
 	SendPropInt( SENDINFO( m_iSpawnInterpCounter), 4 ),
-	SendPropInt( SENDINFO( m_iPlayerSoundType), 3 ),
 	
 	SendPropExclude( "DT_BaseAnimating", "m_flPoseParameter" ),
 	SendPropExclude( "DT_BaseFlex", "m_viewtarget" ),
@@ -103,38 +99,31 @@ BEGIN_ENT_SCRIPTDESC( CJBMod_Player, CHL2_Player, "JBMod Player" )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptEquipSuit, "EquipSuit", "Give the player the HEV suit." )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGiveItem, "GiveItem", "Give the player a specific item by classname." )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGiveAmmo, "GiveAmmo", "Give the player a specific amount of ammo (count, ammoName)." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSwitchToWeapon, "SwitchToWeapon", "Switch to a weapon the player owns by classname." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetClientConVar, "GetClientConVar", "Read a client ConVar value by name." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptRemoveAllItems, "RemoveAllItems", "Strip all weapons and suit from the player." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetFragCount, "GetFragCount", "Get the player's frag count." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptAddFrags, "AddFrags", "Add to the player's frag count." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptAddTeamScore, "AddTeamScore", "Add to this player's team score." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSetPlayerModel, "SetPlayerModel", "Set player model." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptCommitSuicide, "CommitSuicide", "Kill the player." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptForceRespawn, "ForceRespawn", "Force the player to respawn immediately." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetPlayerName, "GetPlayerName", "Get the player's name." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptIsAlive, "IsAlive", "Returns true if the player is alive." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetDeathCount, "GetDeathCount", "Get the player's death count." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptAddDeaths, "AddDeaths", "Add to the player's death count." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetArmorValue, "GetArmorValue", "Get the player's armor value." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSetArmorValue, "SetArmorValue", "Set the player's armor value." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptShowMOTD, "ShowMOTD", "Show the Message of the Day panel to this player." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetDeathTime, "GetDeathTime", "Get the time this player last died." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSetMaxSpeed, "SetMaxSpeed", "Set the player's maximum movement speed." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptSetMaxHealth, "SetMaxHealth", "Set the player's maximum health." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetButtons, "GetButtons", "Get the player's currently pressed buttons (bitmask)." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetEyeForward, "GetEyeForward", "Get the player's eye forward direction vector." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptShowViewModel, "ShowViewModel", "Show or hide the player's viewmodel." )
 END_SCRIPTDESC();
 
-const char *g_ppszRandomCitizenModels[] = 
-{
-	"models/humans/group03/male_01.mdl",
-	"models/humans/group03/male_02.mdl",
-	"models/humans/group03/female_01.mdl",
-	"models/humans/group03/male_03.mdl",
-	"models/humans/group03/female_02.mdl",
-	"models/humans/group03/male_04.mdl",
-	"models/humans/group03/female_03.mdl",
-	"models/humans/group03/male_05.mdl",
-	"models/humans/group03/female_04.mdl",
-	"models/humans/group03/male_06.mdl",
-	"models/humans/group03/female_06.mdl",
-	"models/humans/group03/male_07.mdl",
-	"models/humans/group03/female_07.mdl",
-	"models/humans/group03/male_08.mdl",
-	"models/humans/group03/male_09.mdl",
-};
-
-const char *g_ppszRandomCombineModels[] =
-{
-	"models/combine_soldier.mdl",
-	"models/combine_soldier_prisonguard.mdl",
-	"models/combine_super_soldier.mdl",
-	"models/police.mdl",
-};
-
-
-#define MAX_COMBINE_MODELS 4
-#define MODEL_CHANGE_INTERVAL 5.0f
+ConVar sv_model_change_interval( "sv_model_change_interval", "5.0", FCVAR_GAMEDLL, "Minimum seconds between player model changes." );
 #define TEAM_CHANGE_INTERVAL 5.0f
 
 #define JBMODPLAYER_PHYSDAMAGE_SCALE 4.0f
@@ -167,6 +156,16 @@ CJBMod_Player::~CJBMod_Player( void )
 
 void CJBMod_Player::UpdateOnRemove( void )
 {
+	if ( g_pScriptVM )
+	{
+		HSCRIPT hFunction = g_pScriptVM->LookupFunction( "OnPlayerDisconnect" );
+		if ( hFunction )
+		{
+			g_pScriptVM->Call( hFunction, NULL, true, NULL, GetScriptInstance() );
+			g_pScriptVM->ReleaseFunction( hFunction );
+		}
+	}
+
 	if ( m_hRagdoll )
 	{
 		UTIL_RemoveImmediate( m_hRagdoll );
@@ -180,101 +179,14 @@ void CJBMod_Player::Precache( void )
 {
 	BaseClass::Precache();
 
-	PrecacheModel ( "sprites/glow01.vmt" );
-
-	//Precache Citizen models
-	int nHeads = ARRAYSIZE( g_ppszRandomCitizenModels );
-	int i;	
-
-	for ( i = 0; i < nHeads; ++i )
-	   	 PrecacheModel( g_ppszRandomCitizenModels[i] );
-
-	//Precache Combine Models
-	nHeads = ARRAYSIZE( g_ppszRandomCombineModels );
-
-	for ( i = 0; i < nHeads; ++i )
-	   	 PrecacheModel( g_ppszRandomCombineModels[i] );
-
-	PrecacheFootStepSounds();
-
-	PrecacheScriptSound( "NPC_MetroPolice.Die" );
-	PrecacheScriptSound( "NPC_CombineS.Die" );
-	PrecacheScriptSound( "NPC_Citizen.die" );
-}
-
-void CJBMod_Player::GiveAllItems( void )
-{
-	EquipSuit();
-
-	CBasePlayer::GiveAmmo( 255,	"Pistol");
-	CBasePlayer::GiveAmmo( 255,	"AR2" );
-	CBasePlayer::GiveAmmo( 5,	"AR2AltFire" );
-	CBasePlayer::GiveAmmo( 255,	"SMG1");
-	CBasePlayer::GiveAmmo( 1,	"smg1_grenade");
-	CBasePlayer::GiveAmmo( 255,	"Buckshot");
-	CBasePlayer::GiveAmmo( 32,	"357" );
-	CBasePlayer::GiveAmmo( 3,	"rpg_round");
-	CBasePlayer::GiveAmmo( 16,	"XBowBolt");
-
-	CBasePlayer::GiveAmmo( 1,	"grenade" );
-	CBasePlayer::GiveAmmo( 2,	"slam" );
-
-	GiveNamedItem( "weapon_crowbar" );
-	GiveNamedItem( "weapon_stunstick" );
-	GiveNamedItem( "weapon_pistol" );
-	GiveNamedItem( "weapon_357" );
-
-	GiveNamedItem( "weapon_smg1" );
-	GiveNamedItem( "weapon_ar2" );
-	
-	GiveNamedItem( "weapon_shotgun" );
-	GiveNamedItem( "weapon_frag" );
-	
-	GiveNamedItem( "weapon_crossbow" );
-	
-	GiveNamedItem( "weapon_rpg" );
-
-	GiveNamedItem( "weapon_slam" );
-
-	GiveNamedItem( "weapon_physcannon" );
-	
-}
-
-void CJBMod_Player::GiveDefaultItems( void )
-{
-	EquipSuit();
-
-	CBasePlayer::GiveAmmo( 255,	"Pistol");
-	CBasePlayer::GiveAmmo( 45,	"SMG1");
-	CBasePlayer::GiveAmmo( 1,	"grenade" );
-	CBasePlayer::GiveAmmo( 6,	"Buckshot");
-	CBasePlayer::GiveAmmo( 6,	"357" );
-
-	if ( GetPlayerModelType() == PLAYER_SOUNDS_METROPOLICE || GetPlayerModelType() == PLAYER_SOUNDS_COMBINESOLDIER )
+	if ( g_pScriptVM )
 	{
-		GiveNamedItem( "weapon_stunstick" );
-	}
-	else if ( GetPlayerModelType() == PLAYER_SOUNDS_CITIZEN )
-	{
-		GiveNamedItem( "weapon_crowbar" );
-	}
-	
-	GiveNamedItem( "weapon_pistol" );
-	GiveNamedItem( "weapon_smg1" );
-	GiveNamedItem( "weapon_frag" );
-	GiveNamedItem( "weapon_physcannon" );
-
-	const char *szDefaultWeaponName = engine->GetClientConVarValue( engine->IndexOfEdict( edict() ), "cl_defaultweapon" );
-
-	CBaseCombatWeapon *pDefaultWeapon = Weapon_OwnsThisType( szDefaultWeaponName );
-
-	if ( pDefaultWeapon )
-	{
-		Weapon_Switch( pDefaultWeapon );
-	}
-	else
-	{
-		Weapon_Switch( Weapon_OwnsThisType( "weapon_physcannon" ) );
+		HSCRIPT hFunction = g_pScriptVM->LookupFunction( "OnPrecache" );
+		if ( hFunction )
+		{
+			g_pScriptVM->Call( hFunction, NULL, true, NULL );
+			g_pScriptVM->ReleaseFunction( hFunction );
+		}
 	}
 }
 
@@ -282,46 +194,18 @@ void CJBMod_Player::PickDefaultSpawnTeam( void )
 {
 	if ( GetTeamNumber() == 0 )
 	{
-		if ( JBModRules()->IsTeamplay() == false )
+		if ( g_pScriptVM )
 		{
-			if ( GetModelPtr() == NULL )
+			HSCRIPT hFunction = g_pScriptVM->LookupFunction( "OnPlayerPickTeam" );
+			if ( hFunction )
 			{
-				const char *szModelName = NULL;
-				szModelName = engine->GetClientConVarValue( engine->IndexOfEdict( edict() ), "cl_playermodel" );
+				ScriptVariant_t result;
+				g_pScriptVM->Call( hFunction, NULL, true, &result, GetScriptInstance() );
+				g_pScriptVM->ReleaseFunction( hFunction );
 
-				if ( ValidatePlayerModel( szModelName ) == false )
+				if ( result.GetType() == FIELD_INTEGER )
 				{
-					char szReturnString[512];
-
-					Q_snprintf( szReturnString, sizeof (szReturnString ), "cl_playermodel models/combine_soldier.mdl\n" );
-					engine->ClientCommand ( edict(), szReturnString );
-				}
-
-				ChangeTeam( TEAM_UNASSIGNED );
-			}
-		}
-		else
-		{
-			CTeam *pCombine = g_Teams[TEAM_COMBINE];
-			CTeam *pRebels = g_Teams[TEAM_REBELS];
-
-			if ( pCombine == NULL || pRebels == NULL )
-			{
-				ChangeTeam( random->RandomInt( TEAM_COMBINE, TEAM_REBELS ) );
-			}
-			else
-			{
-				if ( pCombine->GetNumPlayers() > pRebels->GetNumPlayers() )
-				{
-					ChangeTeam( TEAM_REBELS );
-				}
-				else if ( pCombine->GetNumPlayers() < pRebels->GetNumPlayers() )
-				{
-					ChangeTeam( TEAM_COMBINE );
-				}
-				else
-				{
-					ChangeTeam( random->RandomInt( TEAM_COMBINE, TEAM_REBELS ) );
+					ChangeTeam( (int)result );
 				}
 			}
 		}
@@ -347,10 +231,7 @@ void CJBMod_Player::Spawn(void)
 
 		RemoveEffects( EF_NODRAW );
 
-		if ( CallScriptOnPlayerSpawn() == false )
-		{
-			GiveDefaultItems();
-		}
+		CallScriptOnPlayerSpawn();
 	}
 
 	SetNumAnimOverlays( 3 );
@@ -382,32 +263,14 @@ void CJBMod_Player::Spawn(void)
 	m_bReady = false;
 }
 
-bool CJBMod_Player::ValidatePlayerModel( const char *pModel )
+void CJBMod_Player::PlayerUse( void )
 {
-	int iModels = ARRAYSIZE( g_ppszRandomCitizenModels );
-	int i;	
+	// Block +use when player is invisible (e.g. Rollerball mode)
+	if ( IsEffectActive( EF_NODRAW ) )
+		return;
 
-	for ( i = 0; i < iModels; ++i )
-	{
-		if ( !Q_stricmp( g_ppszRandomCitizenModels[i], pModel ) )
-		{
-			return true;
-		}
-	}
-
-	iModels = ARRAYSIZE( g_ppszRandomCombineModels );
-
-	for ( i = 0; i < iModels; ++i )
-	{
-	   	if ( !Q_stricmp( g_ppszRandomCombineModels[i], pModel ) )
-		{
-			return true;
-		}
-	}
-
-	return false;
+	BaseClass::PlayerUse();
 }
-
 ConVar jbmod_allow_pickup( "jbmod_allow_pickup", "0", FCVAR_GAMEDLL );
 
 void CJBMod_Player::PickupObject( CBaseEntity* pObject, bool bLimitMassAndSize )
@@ -418,145 +281,39 @@ void CJBMod_Player::PickupObject( CBaseEntity* pObject, bool bLimitMassAndSize )
 	return BaseClass::PickupObject( pObject, bLimitMassAndSize );
 }
 
-void CJBMod_Player::SetPlayerTeamModel( void )
-{
-	const char *szModelName = NULL;
-	szModelName = engine->GetClientConVarValue( engine->IndexOfEdict( edict() ), "cl_playermodel" );
-
-	int modelIndex = modelinfo->GetModelIndex( szModelName );
-
-	if ( modelIndex == -1 || ValidatePlayerModel( szModelName ) == false )
-	{
-		szModelName = "models/Combine_Soldier.mdl";
-		m_iModelType = TEAM_COMBINE;
-
-		char szReturnString[512];
-
-		Q_snprintf( szReturnString, sizeof (szReturnString ), "cl_playermodel %s\n", szModelName );
-		engine->ClientCommand ( edict(), szReturnString );
-	}
-
-	if ( GetTeamNumber() == TEAM_COMBINE )
-	{
-		if ( Q_stristr( szModelName, "models/human") )
-		{
-			int nHeads = ARRAYSIZE( g_ppszRandomCombineModels );
-		
-			g_iLastCombineModel = ( g_iLastCombineModel + 1 ) % nHeads;
-			szModelName = g_ppszRandomCombineModels[g_iLastCombineModel];
-		}
-
-		m_iModelType = TEAM_COMBINE;
-	}
-	else if ( GetTeamNumber() == TEAM_REBELS )
-	{
-		if ( !Q_stristr( szModelName, "models/human") )
-		{
-			int nHeads = ARRAYSIZE( g_ppszRandomCitizenModels );
-
-			g_iLastCitizenModel = ( g_iLastCitizenModel + 1 ) % nHeads;
-			szModelName = g_ppszRandomCitizenModels[g_iLastCitizenModel];
-		}
-
-		m_iModelType = TEAM_REBELS;
-	}
-	
-	SetModel( szModelName );
-	SetupPlayerSoundsByModel( szModelName );
-
-	m_flNextModelChangeTime = gpGlobals->curtime + MODEL_CHANGE_INTERVAL;
-}
-
 void CJBMod_Player::SetPlayerModel( void )
 {
-	const char *szModelName = NULL;
-	const char *pszCurrentModelName = modelinfo->GetModelName( GetModel());
-
-	szModelName = engine->GetClientConVarValue( engine->IndexOfEdict( edict() ), "cl_playermodel" );
-
-	if ( ValidatePlayerModel( szModelName ) == false )
+	if ( g_pScriptVM )
 	{
-		char szReturnString[512];
-
-		if ( ValidatePlayerModel( pszCurrentModelName ) == false )
+		HSCRIPT hFunction = g_pScriptVM->LookupFunction( "OnPlayerSetModel" );
+		if ( hFunction )
 		{
-			pszCurrentModelName = "models/Combine_Soldier.mdl";
-		}
+			const char *pRequestedModel = engine->GetClientConVarValue( entindex(), "cl_playermodel" );
+			ScriptVariant_t result;
+			g_pScriptVM->Call( hFunction, NULL, true, &result, GetScriptInstance(), pRequestedModel );
+			g_pScriptVM->ReleaseFunction( hFunction );
 
-		Q_snprintf( szReturnString, sizeof (szReturnString ), "cl_playermodel %s\n", pszCurrentModelName );
-		engine->ClientCommand ( edict(), szReturnString );
-
-		szModelName = pszCurrentModelName;
-	}
-
-	if ( GetTeamNumber() == TEAM_COMBINE )
-	{
-		int nHeads = ARRAYSIZE( g_ppszRandomCombineModels );
-		
-		g_iLastCombineModel = ( g_iLastCombineModel + 1 ) % nHeads;
-		szModelName = g_ppszRandomCombineModels[g_iLastCombineModel];
-
-		m_iModelType = TEAM_COMBINE;
-	}
-	else if ( GetTeamNumber() == TEAM_REBELS )
-	{
-		int nHeads = ARRAYSIZE( g_ppszRandomCitizenModels );
-
-		g_iLastCitizenModel = ( g_iLastCitizenModel + 1 ) % nHeads;
-		szModelName = g_ppszRandomCitizenModels[g_iLastCitizenModel];
-
-		m_iModelType = TEAM_REBELS;
-	}
-	else
-	{
-		if ( Q_strlen( szModelName ) == 0 ) 
-		{
-			szModelName = g_ppszRandomCitizenModels[0];
-		}
-
-		if ( Q_stristr( szModelName, "models/human") )
-		{
-			m_iModelType = TEAM_REBELS;
-		}
-		else
-		{
-			m_iModelType = TEAM_COMBINE;
+			const char *pModelStr = (const char *)result;
+			if ( result.GetType() == FIELD_CSTRING )
+				ScriptSetPlayerModel( pModelStr );
 		}
 	}
-
-	int modelIndex = modelinfo->GetModelIndex( szModelName );
-
-	if ( modelIndex == -1 )
-	{
-		szModelName = "models/Combine_Soldier.mdl";
-		m_iModelType = TEAM_COMBINE;
-
-		char szReturnString[512];
-
-		Q_snprintf( szReturnString, sizeof (szReturnString ), "cl_playermodel %s\n", szModelName );
-		engine->ClientCommand ( edict(), szReturnString );
-	}
-
-	SetModel( szModelName );
-	SetupPlayerSoundsByModel( szModelName );
-
-	m_flNextModelChangeTime = gpGlobals->curtime + MODEL_CHANGE_INTERVAL;
 }
 
-void CJBMod_Player::SetupPlayerSoundsByModel( const char *pModelName )
+void CJBMod_Player::ScriptShowMOTD( void )
 {
-	if ( Q_stristr( pModelName, "models/human") )
-	{
-		m_iPlayerSoundType = (int)PLAYER_SOUNDS_CITIZEN;
-	}
-	else if ( Q_stristr(pModelName, "police" ) )
-	{
-		m_iPlayerSoundType = (int)PLAYER_SOUNDS_METROPOLICE;
-	}
-	else if ( Q_stristr(pModelName, "combine" ) )
-	{
-		m_iPlayerSoundType = (int)PLAYER_SOUNDS_COMBINESOLDIER;
-	}
+	const ConVar *hostname = cvar->FindVar( "hostname" );
+	const char *title = (hostname) ? hostname->GetString() : "MESSAGE OF THE DAY";
+
+	KeyValues *data = new KeyValues("data");
+	data->SetString( "title", title );
+	data->SetString( "type", "1" );
+	data->SetString( "msg", "motd" );
+	data->SetBool( "unload", true );
+
+	ShowViewPortPanel( PANEL_INFO, true, data );
+
+	data->deleteThis();
 }
 
 void CJBMod_Player::ResetAnimation( void )
@@ -722,7 +479,8 @@ bool CJBMod_Player::WantsLagCompensationOnEntity( const CBasePlayer *pPlayer, co
 
 Activity CJBMod_Player::TranslateTeamActivity( Activity ActToTranslate )
 {
-	if ( m_iModelType == TEAM_COMBINE )
+	const char *pModelName = STRING( GetModelName() );
+	if ( Q_stristr( pModelName, "combine" ) || Q_stristr( pModelName, "police" ) )
 		 return ActToTranslate;
 	
 	if ( ActToTranslate == ACT_RUN )
@@ -961,14 +719,19 @@ bool CJBMod_Player::BumpWeapon( CBaseCombatWeapon *pWeapon )
 
 void CJBMod_Player::ChangeTeam( int iTeam )
 {
-/*	if ( GetNextTeamChangeTime() >= gpGlobals->curtime )
+	if ( g_pScriptVM )
 	{
-		char szReturnString[128];
-		Q_snprintf( szReturnString, sizeof( szReturnString ), "Please wait %d more seconds before trying to switch teams again.\n", (int)(GetNextTeamChangeTime() - gpGlobals->curtime) );
+		HSCRIPT hFunction = g_pScriptVM->LookupFunction( "OnPlayerChangeTeam" );
+		if ( hFunction )
+		{
+			ScriptVariant_t result;
+			g_pScriptVM->Call( hFunction, NULL, true, &result, GetScriptInstance(), iTeam );
+			g_pScriptVM->ReleaseFunction( hFunction );
 
-		ClientPrint( this, HUD_PRINTTALK, szReturnString );
-		return;
-	}*/
+			if ( result.GetType() == FIELD_BOOLEAN && !(bool)result )
+				return;
+		}
+	}
 
 	bool bKill = false;
 
@@ -990,14 +753,7 @@ void CJBMod_Player::ChangeTeam( int iTeam )
 
 	m_flNextTeamChangeTime = gpGlobals->curtime + TEAM_CHANGE_INTERVAL;
 
-	if ( JBModRules()->IsTeamplay() == true )
-	{
-		SetPlayerTeamModel();
-	}
-	else
-	{
-		SetPlayerModel();
-	}
+	SetPlayerModel();
 
 	if ( iTeam == TEAM_SPECTATOR )
 	{
@@ -1094,9 +850,14 @@ void CJBMod_Player::CheatImpulseCommands( int iImpulse )
 	{
 		case 101:
 			{
-				if( sv_cheats->GetBool() )
+				if( sv_cheats->GetBool() && g_pScriptVM )
 				{
-					GiveAllItems();
+					HSCRIPT hFunction = g_pScriptVM->LookupFunction( "OnGiveAllItems" );
+					if ( hFunction )
+					{
+						g_pScriptVM->Call( hFunction, NULL, true, NULL, GetScriptInstance() );
+						g_pScriptVM->ReleaseFunction( hFunction );
+					}
 				}
 			}
 			break;
@@ -1310,7 +1071,10 @@ void CJBMod_Player::Event_Killed( const CTakeDamageInfo &info )
 
 	// Note: since we're dead, it won't draw us on the client, but we don't set EF_NODRAW
 	// because we still want to transmit to the clients in our PVS.
-	CreateRagdollEntity();
+	if ( !IsEffectActive( EF_NODRAW ) )
+	{
+		CreateRagdollEntity();
+	}
 
 	DetonateTripmines();
 
@@ -1326,16 +1090,16 @@ void CJBMod_Player::Event_Killed( const CTakeDamageInfo &info )
 
 	CBaseEntity *pAttacker = info.GetAttacker();
 
-	if ( pAttacker )
+	if ( g_pScriptVM )
 	{
-		int iScoreToAdd = 1;
-
-		if ( pAttacker == this )
+		HSCRIPT hFunction = g_pScriptVM->LookupFunction( "OnPlayerKilled" );
+		if ( hFunction )
 		{
-			iScoreToAdd = -1;
+			g_pScriptVM->Call( hFunction, NULL, true, NULL,
+				GetScriptInstance(),
+				ToHScript( pAttacker ) );
+			g_pScriptVM->ReleaseFunction( hFunction );
 		}
-
-		GetGlobalTeam( pAttacker->GetTeamNumber() )->AddScore( iScoreToAdd );
 	}
 
 	FlashlightTurnOff();
@@ -1352,6 +1116,34 @@ int CJBMod_Player::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	if ( gpGlobals->curtime < m_flSlamProtectTime &&  (inputInfo.GetDamageType() == DMG_BLAST ) )
 		return 0;
 
+	if ( g_pScriptVM )
+	{
+		HSCRIPT hFunction = g_pScriptVM->LookupFunction( "OnPlayerTakeDamage" );
+		if ( hFunction )
+		{
+			ScriptVariant_t result;
+			g_pScriptVM->Call( hFunction, NULL, true, &result,
+				GetScriptInstance(),
+				ToHScript( inputInfo.GetAttacker() ),
+				inputInfo.GetDamage() );
+			g_pScriptVM->ReleaseFunction( hFunction );
+
+			if ( result.GetType() == FIELD_FLOAT || result.GetType() == FIELD_INTEGER )
+			{
+				float flNewDamage = (float)result;
+				if ( flNewDamage < 0 )
+					return 0;
+
+				CTakeDamageInfo modifiedInfo = inputInfo;
+				modifiedInfo.SetDamage( flNewDamage );
+
+				m_vecTotalBulletForce += modifiedInfo.GetDamageForce();
+				gamestats->Event_PlayerDamage( this, modifiedInfo );
+				return BaseClass::OnTakeDamage( modifiedInfo );
+			}
+		}
+	}
+
 	m_vecTotalBulletForce += inputInfo.GetDamageForce();
 	
 	gamestats->Event_PlayerDamage( this, inputInfo );
@@ -1364,14 +1156,29 @@ void CJBMod_Player::DeathSound( const CTakeDamageInfo &info )
 	if ( m_hRagdoll && m_hRagdoll->GetBaseAnimating()->IsDissolving() )
 		 return;
 
-	char szStepSound[128];
+	const char *pSoundName = NULL;
 
-	Q_snprintf( szStepSound, sizeof( szStepSound ), "%s.Die", GetPlayerModelSoundPrefix() );
+	if ( g_pScriptVM )
+	{
+		HSCRIPT hFunction = g_pScriptVM->LookupFunction( "OnPlayerDeathSound" );
+		if ( hFunction )
+		{
+			ScriptVariant_t result;
+			g_pScriptVM->Call( hFunction, NULL, true, &result, GetScriptInstance() );
+			g_pScriptVM->ReleaseFunction( hFunction );
+
+			if ( result.GetType() == FIELD_CSTRING )
+				pSoundName = (const char *)result;
+		}
+	}
+
+	if ( !pSoundName || !pSoundName[0] )
+		return;
 
 	const char *pModelName = STRING( GetModelName() );
 
 	CSoundParameters params;
-	if ( GetParametersForSound( szStepSound, params, pModelName ) == false )
+	if ( GetParametersForSound( pSoundName, params, pModelName ) == false )
 		return;
 
 	Vector vecOrigin = GetAbsOrigin();
@@ -1398,23 +1205,19 @@ CBaseEntity* CJBMod_Player::EntSelectSpawnPoint( void )
 	edict_t		*player = edict();
 	const char *pSpawnpointName = "info_player_deathmatch";
 
-	if ( JBModRules()->IsTeamplay() == true )
+	if ( g_pScriptVM )
 	{
-		if ( GetTeamNumber() == TEAM_COMBINE )
+		HSCRIPT hFunction = g_pScriptVM->LookupFunction( "GetSpawnPointClassname" );
+		if ( hFunction )
 		{
-			pSpawnpointName = "info_player_combine";
-			pLastSpawnPoint = g_pLastCombineSpawn;
-		}
-		else if ( GetTeamNumber() == TEAM_REBELS )
-		{
-			pSpawnpointName = "info_player_rebel";
-			pLastSpawnPoint = g_pLastRebelSpawn;
-		}
+			ScriptVariant_t result;
+			g_pScriptVM->Call( hFunction, NULL, true, &result, GetScriptInstance() );
+			g_pScriptVM->ReleaseFunction( hFunction );
 
-		if ( gEntList.FindEntityByClassname( NULL, pSpawnpointName ) == NULL )
-		{
-			pSpawnpointName = "info_player_deathmatch";
-			pLastSpawnPoint = g_pLastSpawn;
+			if ( result.GetType() == FIELD_CSTRING && (const char *)result != NULL && ((const char *)result)[0] )
+			{
+				pSpawnpointName = (const char *)result;
+			}
 		}
 	}
 
@@ -1469,59 +1272,7 @@ CBaseEntity* CJBMod_Player::EntSelectSpawnPoint( void )
 			goto ReturnSpot;
 	}
 
-	// Incredibly terrible garbage way of getting CSS and DOD spawnpoints to work.
-	// These aren't set up for teamplay so it'll just plop you at a random spawn.
-	// Stops the game from immediately crashing on CSS maps.
-	// -nocaps 29.3.26
-
-	// cstrike spawns
-	if ( !pSpot )
-	{
-		pSpot = gEntList.FindEntityByClassname( pSpot, "info_player_counterterrorist" );
-
-		if ( pSpot )
-			goto ReturnSpot;
-	}
-
-	if ( !pSpot )
-	{
-		pSpot = gEntList.FindEntityByClassname( pSpot, "info_player_terrorist" );
-
-		if ( pSpot )
-			goto ReturnSpot;
-	}
-
-	// day of defeat spawns
-	if ( !pSpot )
-	{
-		pSpot = gEntList.FindEntityByClassname( pSpot, "info_player_allies" );
-
-		if ( pSpot )
-			goto ReturnSpot;
-	}
-
-	if ( !pSpot )
-	{
-		pSpot = gEntList.FindEntityByClassname( pSpot, "info_player_axis" );
-
-		if ( pSpot )
-			goto ReturnSpot;
-	}
-
-
 ReturnSpot:
-
-	if ( JBModRules()->IsTeamplay() == true )
-	{
-		if ( GetTeamNumber() == TEAM_COMBINE )
-		{
-			g_pLastCombineSpawn = pSpot;
-		}
-		else if ( GetTeamNumber() == TEAM_REBELS ) 
-		{
-			g_pLastRebelSpawn = pSpot;
-		}
-	}
 
 	g_pLastSpawn = pSpot;
 
@@ -1603,8 +1354,64 @@ bool CJBMod_Player::CallScriptOnPlayerSpawn( void )
 	return false;
 }
 
+void CJBMod_Player::ScriptSwitchToWeapon( const char *szWeapon )
+{
+	CBaseCombatWeapon *pWeapon = Weapon_OwnsThisType( szWeapon );
+	if ( pWeapon )
+	{
+		Weapon_Switch( pWeapon );
+	}
+}
+
+const char *CJBMod_Player::ScriptGetClientConVar( const char *szCvar )
+{
+	if ( !szCvar || !szCvar[0] )
+		return "";
+
+	return engine->GetClientConVarValue( engine->IndexOfEdict( edict() ), szCvar );
+}
+
+void CJBMod_Player::ScriptAddTeamScore( int nScore )
+{
+	CTeam *pTeam = GetTeam();
+	if ( pTeam )
+	{
+		pTeam->AddScore( nScore );
+	}
+}
+
+void CJBMod_Player::ScriptSetPlayerModel( const char *szModel )
+{
+	if ( !szModel || !szModel[0] || !Q_stristr( szModel, ".mdl" ) )
+		return;
+
+	SetModel( szModel );
+	m_flNextModelChangeTime = gpGlobals->curtime + sv_model_change_interval.GetFloat();
+}
+
 void CJBMod_Player::CheckChatText( char *p, int bufsize )
 {
+	if ( g_pScriptVM )
+	{
+		HSCRIPT hFunction = g_pScriptVM->LookupFunction( "OnPlayerChat" );
+		if ( hFunction )
+		{
+			ScriptVariant_t result;
+			g_pScriptVM->Call( hFunction, NULL, true, &result, GetScriptInstance(), p );
+			g_pScriptVM->ReleaseFunction( hFunction );
+
+			if ( result.GetType() == FIELD_BOOLEAN && !(bool)result )
+			{
+				p[0] = '\0';
+				return;
+			}
+			else if ( result.GetType() == FIELD_CSTRING )
+			{
+				Q_strncpy( p, (const char *)result, bufsize );
+			}
+		}
+	}
+
 	//Look for escape sequences and replace
 
 	char *buf = new char[bufsize];
@@ -1682,6 +1489,13 @@ CJBModPlayerStateInfo *CJBMod_Player::State_LookupInfo( JBModPlayerState state )
 	}
 
 	return NULL;
+}
+
+const Vector &CJBMod_Player::ScriptGetEyeForward( void )
+{
+	static Vector vecForward;
+	AngleVectors( pl.v_angle, &vecForward );
+	return vecForward;
 }
 
 bool CJBMod_Player::StartObserverMode(int mode)

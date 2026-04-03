@@ -5,13 +5,6 @@
 // $NoKeywords: $
 //
 //=============================================================================//
-/*
-
-===== tf_client.cpp ========================================================
-
-  HL2 client/server game specific stuff
-
-*/
 
 #include "cbase.h"
 #include "jbmod_player.h"
@@ -25,6 +18,8 @@
 #include "engine/IEngineSound.h"
 #include "team.h"
 #include "viewport_panel_names.h"
+#include "vscript_shared.h"
+#include "filesystem.h"
 
 #include "tier0/vprof.h"
 
@@ -32,8 +27,6 @@
 #include "tier0/memdbgon.h"
 
 void Host_Say( edict_t *pEdict, bool teamonly );
-
-ConVar sv_motd_unload_on_dismissal( "sv_motd_unload_on_dismissal", "0", 0, "If enabled, the MOTD contents will be unloaded when the player closes the MOTD." );
 
 extern CBaseEntity*	FindPickerEntityClass( CBasePlayer *pPlayer, char *classname );
 extern bool			g_fGameOver;
@@ -43,38 +36,15 @@ void FinishClientPutInServer( CJBMod_Player *pPlayer )
 	pPlayer->InitialSpawn();
 	pPlayer->Spawn();
 
-
-	char sName[128];
-	Q_strncpy( sName, pPlayer->GetPlayerName(), sizeof( sName ) );
-	
-	// First parse the name and remove any %'s
-	for ( char *pApersand = sName; pApersand != NULL && *pApersand != 0; pApersand++ )
+	if ( g_pScriptVM )
 	{
-		// Replace it with a space
-		if ( *pApersand == '%' )
-				*pApersand = ' ';
+		HSCRIPT hFunction = g_pScriptVM->LookupFunction( "OnPlayerConnect" );
+		if ( hFunction )
+		{
+			g_pScriptVM->Call( hFunction, NULL, true, NULL, pPlayer->GetScriptInstance() );
+			g_pScriptVM->ReleaseFunction( hFunction );
+		}
 	}
-
-	// notify other clients of player joining the game
-	UTIL_ClientPrintAll( HUD_PRINTNOTIFY, "#Game_connected", sName[0] != 0 ? sName : "<unconnected>" );
-
-	if ( JBModRules()->IsTeamplay() == true )
-	{
-		ClientPrint( pPlayer, HUD_PRINTTALK, "You are on team %s1\n", pPlayer->GetTeam()->GetName() );
-	}
-
-	const ConVar *hostname = cvar->FindVar( "hostname" );
-	const char *title = (hostname) ? hostname->GetString() : "MESSAGE OF THE DAY";
-
-	KeyValues *data = new KeyValues("data");
-	data->SetString( "title", title );		// info panel title
-	data->SetString( "type", "1" );			// show userdata from stringtable entry
-	data->SetString( "msg",	"motd" );		// use this stringtable entry
-	data->SetBool( "unload", sv_motd_unload_on_dismissal.GetBool() );
-
-	pPlayer->ShowViewPortPanel( PANEL_INFO, true, data );
-
-	data->deleteThis();
 }
 
 /*
@@ -86,7 +56,6 @@ called each time a player is spawned into the game
 */
 void ClientPutInServer( edict_t *pEdict, const char *playername )
 {
-	// Allocate a CBaseTFPlayer for pev, and call spawn
 	CJBMod_Player *pPlayer = CJBMod_Player::CreatePlayer( "player", pEdict );
 	pPlayer->SetPlayerName( playername );
 }
@@ -94,7 +63,7 @@ void ClientPutInServer( edict_t *pEdict, const char *playername )
 
 void ClientActive( edict_t *pEdict, bool bLoadGame )
 {
-	// Can't load games in CS!
+	// Can't load games!
 	Assert( !bLoadGame );
 
 	CJBMod_Player *pPlayer = ToJBModPlayer( CBaseEntity::Instance( pEdict ) );
@@ -139,21 +108,39 @@ CBaseEntity* FindEntity( edict_t *pEdict, char *classname)
 //-----------------------------------------------------------------------------
 void ClientGamePrecache( void )
 {
-	CBaseEntity::PrecacheModel("models/player.mdl");
-	CBaseEntity::PrecacheModel( "models/gibs/agibs.mdl" );
-	CBaseEntity::PrecacheModel ("models/weapons/v_hands.mdl");
+	const char *pFilename = "scripts/client_precache.txt";
+	KeyValues *pValues = new KeyValues( "ClientPrecache" );
 
-	CBaseEntity::PrecacheScriptSound( "HUDQuickInfo.LowAmmo" );
-	CBaseEntity::PrecacheScriptSound( "HUDQuickInfo.LowHealth" );
+	if ( !pValues->LoadFromFile( filesystem, pFilename, "GAME" ) )
+	{
+		Error( "Can't open %s for client precache info.", pFilename );
+		pValues->deleteThis();
+		return;
+	}
 
-	CBaseEntity::PrecacheScriptSound( "FX_AntlionImpact.ShellImpact" );
-	CBaseEntity::PrecacheScriptSound( "Missile.ShotDown" );
-	CBaseEntity::PrecacheScriptSound( "Bullets.DefaultNearmiss" );
-	CBaseEntity::PrecacheScriptSound( "Bullets.GunshipNearmiss" );
-	CBaseEntity::PrecacheScriptSound( "Bullets.StriderNearmiss" );
-	
-	CBaseEntity::PrecacheScriptSound( "Geiger.BeepHigh" );
-	CBaseEntity::PrecacheScriptSound( "Geiger.BeepLow" );
+	for ( KeyValues *pData = pValues->GetFirstSubKey(); pData != NULL; pData = pData->GetNextKey() )
+	{
+		const char *pszType = pData->GetName();
+		const char *pszFile = pData->GetString();
+
+		if ( Q_strlen( pszType ) > 0 && Q_strlen( pszFile ) > 0 )
+		{
+			if ( !Q_stricmp( pData->GetName(), "model" ) )
+			{
+				CBaseEntity::PrecacheModel( pszFile );
+			}
+			else if ( !Q_stricmp( pData->GetName(), "scriptsound" ) )
+			{
+				CBaseEntity::PrecacheScriptSound( pszFile );
+			}
+			else if ( !Q_stricmp( pData->GetName(), "particle" ) )
+			{
+				PrecacheParticleSystem( pszFile );
+			}
+		}
+	}
+
+	pValues->deleteThis();
 }
 
 
@@ -164,14 +151,24 @@ void respawn( CBaseEntity *pEdict, bool fCopyCorpse )
 
 	if ( pPlayer )
 	{
-		if ( gpGlobals->curtime > pPlayer->GetDeathTime() + DEATH_ANIMATION_TIME )
-		{		
-			// respawn player
-			pPlayer->Spawn();			
-		}
-		else
+		if ( g_pScriptVM )
 		{
-			pPlayer->SetNextThink( gpGlobals->curtime + 0.1f );
+			HSCRIPT hFunction = g_pScriptVM->LookupFunction( "OnPlayerRespawn" );
+			if ( hFunction )
+			{
+				ScriptVariant_t result;
+				g_pScriptVM->Call( hFunction, NULL, true, &result, pPlayer->GetScriptInstance() );
+				g_pScriptVM->ReleaseFunction( hFunction );
+
+				if ( result.GetType() == FIELD_BOOLEAN )
+				{
+					if ( (bool)result )
+						pPlayer->Spawn();
+					else
+						pPlayer->SetNextThink( gpGlobals->curtime + 0.1f );
+					return;
+				}
+			}
 		}
 	}
 }
@@ -190,7 +187,6 @@ void GameStartFrame( void )
 //=========================================================
 void InstallGameRules()
 {
-	// vanilla deathmatch
 	CreateGameRulesObject( "CJBModRules" );
 }
 

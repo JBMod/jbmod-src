@@ -12,15 +12,6 @@
 #define JBMOD_PUSHAWAY_THINK_INTERVAL		(1.0f / 20.0f)
 #include "studio.h"
 
-
-enum
-{
-	PLAYER_SOUNDS_CITIZEN = 0,
-	PLAYER_SOUNDS_COMBINESOLDIER,
-	PLAYER_SOUNDS_METROPOLICE,
-	PLAYER_SOUNDS_MAX,
-};
-
 enum JBModPlayerState
 {
 	// Happily running around in the game.

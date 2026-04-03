@@ -12,11 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-printl( "Initializing Sandbox..." );
+//=============================================================================
+// Sandbox gamemode
+// Starts with a physgun, will eventually be where spawn menus etc are
+//=============================================================================
 SetGameDescription( "JBMod Sandbox" );
-Convars.SetValue( "sv_infinite_aux_power", 1 );
-Convars.SetValue( "mp_falldamage", 1 );
+Convars.SetDefault( "sv_infinite_aux_power", "1" );
+Convars.SetDefault( "mp_falldamage", "1" );
 
+//=============================================================================
+// Include base gamemode for default behavior
+//=============================================================================
+IncludeScript( "gamemodes/base.nut" );
+
+//=============================================================================
+// Spawn with suit + physgun
+//=============================================================================
 function OnPlayerSpawn( player )
 {
 	player.EquipSuit();
