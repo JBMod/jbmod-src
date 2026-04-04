@@ -12,11 +12,11 @@ $Include "$SRCDIR\game\server\nav_mesh.vpc"
 
 $Configuration
 {
-	$Compiler
-	{
-		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\game\shared\hl2,.\hl2,.\jbmod,.\episodic,$SRCDIR\game\shared\jbmod,$SRCDIR\game\shared\episodic"
-		$PreprocessorDefinitions		"$BASE;JBMOD;HL2MP;HL2_DLL;HL2_EPISODIC;NEXT_BOT"
-	}
+		$Compiler
+		{
+		$AdditionalIncludeDirectories	"$BASE;$SRCDIRgamesharedhl2,.hl2,.jbmod,.episodic,$SRCDIRgamesharedjbmod,$SRCDIRgamesharedepisodic,$SRCDIRdaScriptinclude,$SRCDIRdaScriptincludedaScript,$SRCDIRsrcpublic"
+			$PreprocessorDefinitions		"$BASE;JBMOD;HL2MP;HL2_DLL;HL2_EPISODIC;NEXT_BOT;ENABLE_DASLANG"
+		}
 }
 
 $Project "Server (JBMod)"
@@ -434,40 +434,49 @@ $Project "Server (JBMod)"
 				}
 			}
 			
-			$Folder	"Weapons"
-			{
-				$File	"jbmod\grenade_satchel.cpp"
-				$File	"jbmod\grenade_satchel.h"
-				$File	"jbmod\grenade_tripmine.cpp"
-				$File	"jbmod\grenade_tripmine.h"
-				$File	"jbmod\te_jbmod_shotgun_shot.cpp"
-				$File	"jbmod\te_jbmod_shotgun_shot.h"
-				$File	"$SRCDIR\game\shared\jbmod\weapon_357.cpp"
-				$File	"$SRCDIR\game\shared\jbmod\weapon_ar2.cpp"
-				$File	"$SRCDIR\game\shared\jbmod\weapon_ar2.h"
-				$File	"$SRCDIR\game\shared\jbmod\weapon_crossbow.cpp"
-				$File	"$SRCDIR\game\shared\jbmod\weapon_crowbar.cpp"
-				$File	"$SRCDIR\game\shared\jbmod\weapon_frag.cpp"
-				$File	"$SRCDIR\game\shared\jbmod\weapon_jbmodbase.cpp"
-				$File	"$SRCDIR\game\shared\jbmod\weapon_jbmodbase.h"
-				$File	"$SRCDIR\game\shared\jbmod\weapon_jbmodbase_machinegun.cpp"
-				$File	"$SRCDIR\game\shared\jbmod\weapon_jbmodbase_machinegun.h"
-				$File	"$SRCDIR\game\shared\jbmod\weapon_jbmodbasebasebludgeon.cpp"
-				$File	"$SRCDIR\game\shared\jbmod\weapon_jbmodbasehlmpcombatweapon.cpp"
-				$File	"$SRCDIR\game\shared\jbmod\weapon_jbmodbasehlmpcombatweapon.h"
-				$File	"$SRCDIR\game\shared\jbmod\weapon_physcannon.cpp"
-				$File	"$SRCDIR\game\shared\jbmod\weapon_physcannon.h"
-				$File	"$SRCDIR\game\shared\jbmod\weapon_pistol.cpp"
-				$File	"$SRCDIR\game\shared\jbmod\weapon_rpg.cpp"
-				$File	"$SRCDIR\game\shared\jbmod\weapon_rpg.h"
-				$File	"$SRCDIR\game\shared\jbmod\weapon_shotgun.cpp"
-				$File	"$SRCDIR\game\shared\jbmod\weapon_slam.cpp"
-				$File	"$SRCDIR\game\shared\jbmod\weapon_slam.h"
-				$File	"$SRCDIR\game\shared\jbmod\weapon_smg1.cpp"
-				$File	"$SRCDIR\game\shared\jbmod\weapon_stunstick.cpp"
-				$File	"$SRCDIR\game\shared\jbmod\weapon_scripted.cpp"
-				$File	"$SRCDIR\game\shared\jbmod\weapon_scripted.h"
-			}
+		$Folder	"Weapons"
+		{
+			$File	"jbmod\grenade_satchel.cpp"
+			$File	"jbmod\grenade_satchel.h"
+			$File	"jbmod\grenade_tripmine.cpp"
+			$File	"jbmod\grenade_tripmine.h"
+			$File	"jbmod\te_jbmod_shotgun_shot.cpp"
+			$File	"jbmod\te_jbmod_shotgun_shot.h"
+			$File	"$SRCDIR\game\shared\jbmod\weapon_357.cpp"
+			$File	"$SRCDIR\game\shared\jbmod\weapon_ar2.cpp"
+			$File	"$SRCDIR\game\shared\jbmod\weapon_ar2.h"
+			$File	"$SRCDIR\game\shared\jbmod\weapon_crossbow.cpp"
+			$File	"$SRCDIR\game\shared\jbmod\weapon_crowbar.cpp"
+			$File	"$SRCDIR\game\shared\jbmod\weapon_frag.cpp"
+			$File	"$SRCDIR\game\shared\jbmod\weapon_jbmodbase.cpp"
+			$File	"$SRCDIR\game\shared\jbmod\weapon_jbmodbase.h"
+			$File	"$SRCDIR\game\shared\jbmod\weapon_jbmodbase_machinegun.cpp"
+			$File	"$SRCDIR\game\shared\jbmod\weapon_jbmodbase_machinegun.h"
+			$File	"$SRCDIR\game\shared\jbmod\weapon_jbmodbasebasebludgeon.cpp"
+			$File	"$SRCDIR\game\shared\jbmod\weapon_jbmodbasehlmpcombatweapon.cpp"
+			$File	"$SRCDIR\game\shared\jbmod\weapon_jbmodbasehlmpcombatweapon.h"
+			$File	"$SRCDIR\game\shared\jbmod\weapon_physcannon.cpp"
+			$File	"$SRCDIR\game\shared\jbmod\weapon_physcannon.h"
+			$File	"$SRCDIR\game\shared\jbmod\weapon_pistol.cpp"
+			$File	"$SRCDIR\game\shared\jbmod\weapon_rpg.cpp"
+			$File	"$SRCDIR\game\shared\jbmod\weapon_rpg.h"
+			$File	"$SRCDIR\game\shared\jbmod\weapon_shotgun.cpp"
+			$File	"$SRCDIR\game\shared\jbmod\weapon_slam.cpp"
+			$File	"$SRCDIR\game\shared\jbmod\weapon_slam.h"
+			$File	"$SRCDIR\game\shared\jbmod\weapon_smg1.cpp"
+			$File	"$SRCDIR\game\shared\jbmod\weapon_stunstick.cpp"
+			$File	"$SRCDIR\game\shared\jbmod\weapon_scripted.cpp"
+			$File	"$SRCDIR\game\shared\jbmod\weapon_scripted.h"
+		}
+		
+		$Folder	"Daslang"
+		{
+			$File	"$SRCDIR/public/daslang_vscript.cpp"
+			$File	"$SRCDIR/public/daslang_vscript.h"
+			$File	"$SRCDIR/public/idlasngvm.h"
+			$File	"$SRCDIR/public/daslang_jbmod_module.cpp"
+			$File	"$SRCDIR/public/daslang_jbmod_module.h"
+		}
 		}
 	}
 }

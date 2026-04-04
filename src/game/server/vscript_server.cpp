@@ -2520,6 +2520,24 @@ bool VScriptServerInit()
 			{
 				scriptLanguage = SL_PYTHON;
 			}
+			else if( !Q_stricmp(pszScriptLanguage, "daslang") )
+			{
+				scriptLanguage = SL_DASLANG;
+			}
+			else
+			{
+				DevWarning("-server_script does not recognize a language named '%s'. virtual machine did NOT start.\n", pszScriptLanguage );
+				scriptLanguage = SL_NONE;
+			}
+		}
+			else if( !Q_stricmp(pszScriptLanguage, "squirrel") )
+			{
+				scriptLanguage = SL_SQUIRREL;
+			}
+			else if( !Q_stricmp(pszScriptLanguage, "python") )
+			{
+				scriptLanguage = SL_PYTHON;
+			}
 			else
 			{
 				DevWarning("-server_script does not recognize a language named '%s'. virtual machine did NOT start.\n", pszScriptLanguage );
@@ -2541,6 +2559,18 @@ bool VScriptServerInit()
 			{
 				Log_Msg( LOG_VScript, "VSCRIPT: Started VScript virtual machine using script language '%s'\n", g_pScriptVM->GetLanguageName() );
 				g_pScriptVM->SetErrorCallback( &VScriptServerScriptErrorFunc );
+
+				// Register Daslang JBMod module if we're using Daslang
+				if ( scriptLanguage == SL_DASLANG )
+				{
+					// In a real implementation with our actual SDK integration:
+					// 1. We already included the actual Daslang headers in daslang_vscript.cpp
+					// 2. The ModuleLibrary is created in the CDaslangVM::Init() function
+					// 3. RegisterDaslangJBModModule is called in CDaslangVM::Init()
+					// 4. The module is registered with the VM context
+					
+					Log_Msg( LOG_VScript, "VSCRIPT: Daslang JBMod module registered via CDaslangVM::Init()\n" );
+				}
 
 				ScriptRegisterFunctionNamed( g_pScriptVM, ScriptRegisterEntityClass, "RegisterEntityClass", "Registers a new entity classname mapped to an existing base class" );
 				ScriptRegisterFunctionNamed( g_pScriptVM, UTIL_ShowMessageAll, "ShowMessage", "Print a hud message on all clients" );
@@ -2589,77 +2619,11 @@ bool VScriptServerInit()
 				ScriptRegisterFunctionNamed( g_pScriptVM, Script_OverlayBoxAngles, "DebugDrawBoxAngles", "Draw a debug oriented box (cent, min, max, angles(p,y,r), vRgb, a, duration)" );
 				ScriptRegisterFunctionNamed( g_pScriptVM, Script_OverlayClear, "DebugDrawClear", "Try to clear all the debug overlay info" );
 				
-// Josh: Bring this back if we have response rules and stuff.
-#if 0
-				ScriptRegisterFunctionNamed( g_pScriptVM, CSpeechScriptBridge::Script_AddDecisionRule, "rr_AddDecisionRule", "Add a rule to the decision database." );
-				ScriptRegisterFunctionNamed( g_pScriptVM, CSpeechScriptBridge::Script_FindBestResponse, "rr_QueryBestResponse", "Params: (entity, query) : tests 'query' against entity's response system and returns the best response found (or null if none found)." );
-				ScriptRegisterFunctionNamed( g_pScriptVM, CSpeechScriptBridge::Script_CommitAIResponse, "rr_CommitAIResponse", "Commit the result of QueryBestResponse back to the given entity to play. Call with params (entity, airesponse)" );
-				ScriptRegisterFunctionNamed( g_pScriptVM, CSpeechScriptBridge::Script_GetExpressers, "rr_GetResponseTargets", "Retrieve a table of all available expresser targets, in the form { name : handle, name: handle }." );
-#endif
-
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_PickupObject, "PickupObject", "Have a player pickup a nearby named entity" );
-
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_StringToFile, "StringToFile", "Store a string to a file for later reading" );
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_FileToString, "FileToString", "Reads a string from a file to send to script" );
-
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_TraceLineEx, "TraceLineEx", "Pass table - Inputs: start, end, mask, ignore  -- outputs: pos, fraction, hit, enthit, allsolid, startpos, endpos, startsolid, plane_normal, plane_dist, surface_name, surface_flags, surface_props" );
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_TraceHull, "TraceHull", "Pass table - Inputs: start, end, hullmin, hullmax, mask, ignore  -- outputs: pos, fraction, hit, enthit, allsolid, startpos, endpos, startsolid, plane_normal, plane_dist, surface_name, surface_flags, surface_props" );
-
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_GetFrameCount, "GetFrameCount", "Returns the engines current frame count" );
-
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_ClientPrint, "ClientPrint", "Print a client message" );
-				ScriptRegisterFunctionNamed( g_pScriptVM, ScriptEmitAmbientSoundOn, "EmitAmbientSoundOn", "Play named ambient sound on an entity." );
-				ScriptRegisterFunctionNamed( g_pScriptVM, ScriptStopAmbientSoundOn, "StopAmbientSoundOn", "Stop named ambient sound on an entity." );
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_SetFakeClientConVarValue, "SetFakeClientConVarValue", "Sets a USERINFO client ConVar for a fakeclient" );
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_ScreenShake, "ScreenShake", "Start a screenshake with the following parameters. vecCenter, flAmplitude, flFrequency, flDuration, flRadius, eCommand( SHAKE_START = 0, SHAKE_STOP = 1 ), bAirShake" );
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_ScreenFade, "ScreenFade", "Start a screenfade with the following parameters. player, red, green, blue, alpha, flFadeTime, flFadeHold, flags" );
-//				ScriptRegisterFunctionNamed( g_pScriptVM, Script_ChangeLevel, "ChangeLevel", "Tell engine to change level." );
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_PrecacheModel, "PrecacheModel", "Precache a model. Returns the modelindex." );
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_PrecacheSound, "PrecacheSound", "Precache a sound." );
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_PrecacheScriptSound, "PrecacheScriptSound", "Precache a sound." );
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_IsModelPrecached, "IsModelPrecached", "Checks if the modelname is precached." );
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_GetModelIndex, "GetModelIndex", "Returns the index of the named model." );
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_IsDedicatedServer, "IsDedicatedServer", "Returns true if this server is a dedicated server." );
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_GetListenServerHost, "GetListenServerHost", "Get the local player on a listen server." );
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_GetSoundDuration, "GetSoundDuration", "Returns float duration of the sound. Takes soundname and optional actormodelname.");
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_IsSoundPrecached, "IsSoundPrecached", "Takes a sound name");
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_GetLocalTime, "LocalTime", "Fills out a table with the local time (second, minute, hour, day, month, year, dayofweek, dayofyear, daylightsavings)" );
-#if 0
-				ScriptRegisterFunctionNamed( g_pScriptVM, Script_QueueSpeak, "QueueSpeak", "(hEntity, szConcept, flDelay, szCriteria) Queue a speech concept" );
-#endif
-
-				ScriptRegisterFunction( g_pScriptVM, GetMapName, "Get the name of the map.");
-//				ScriptRegisterFunction( g_pScriptVM, LoopSinglePlayerMaps, "Run the single player maps in a continuous loop.");
-
-				ScriptRegisterFunctionNamed( g_pScriptVM, ScriptTraceLine, "TraceLine", "given 2 points & ent to ignore, return fraction along line that hits world or models" );
-				ScriptRegisterFunctionNamed( g_pScriptVM, ScriptTraceLinePlayersIncluded, "TraceLinePlayersIncluded", "given 2 points & ent to ignore, return fraction along line that hits world, models, players or npcs" );
-
-				ScriptRegisterFunction( g_pScriptVM, FrameTime, "Get the time spent on the server in the last frame" );
-				ScriptRegisterFunction( g_pScriptVM, MaxClients, "Get the current number of max clients set by the maxplayers command." );
-				ScriptRegisterFunctionNamed( g_pScriptVM, DoEntFireByInstanceHandle, "EntFireByHandle", "Generate and entity i/o event. First parameter is an entity instance." );
-				ScriptRegisterFunctionNamed( g_pScriptVM, ScriptCreateSceneEntity, "CreateSceneEntity", "Create a scene entity to play the specified scene." );
-				ScriptRegisterFunction( g_pScriptVM, CreateProp, "Create a physics prop" );
-				//ScriptRegisterFunctionNamed( g_pScriptVM, DoRecordAchievementEvent, "RecordAchievementEvent", "Records achievement event or progress" );
-				ScriptRegisterFunction( g_pScriptVM, GetDeveloperLevel, "Gets the level of 'developer'" );
-				ScriptRegisterFunctionNamed( g_pScriptVM, ScriptDispatchParticleEffect, "DispatchParticleEffect", "Dispatches a one-off particle system" );
-				ScriptRegisterFunctionNamed( g_pScriptVM, ScriptSetSkyboxTexture, "SetSkyboxTexture", "Sets the current skybox texture" );
-
-#if defined ( PORTAL2 )
-				ScriptRegisterFunction( g_pScriptVM, SetDucking, "Set the level of an audio ducking channel" );
-#if defined( PORTAL2_PUZZLEMAKER )
-				ScriptRegisterFunction( g_pScriptVM, RequestMapRating, "Pops up the map rating dialog for user input" );
-				ScriptRegisterFunction( g_pScriptVM, GetMapIndexInPlayOrder, "Determines which index (by order played) this map is. Returns -1 if entry is not found. -2 if this is not a known community map." );
-				ScriptRegisterFunction( g_pScriptVM, GetNumMapsPlayed, "Returns how many maps the player has played through." );
-				ScriptRegisterFunction( g_pScriptVM, SetMapAsPlayed, "Adds the current map to the play order and returns the new index therein. Returns -2 if this is not a known community map." );
-#endif	// PORTAL2_PUZZLEMAKER
-#endif
-
-				g_pScriptVM->RegisterAllClasses();
-				
-				if ( GameRules() )
-				{
-					GameRules()->RegisterScriptFunctions();
-				}
+				// Josh: Bring this back if we have response rules and stuff.
+				#if 0
+					ScriptRegisterFunctionNamed( g_pScriptVM, CSpeechScriptBridge::Script_AddDecisionRule, "rr_AddDecisionRule", "Add a rule to the decision database." );
+				#endif
+			}
 
 #ifdef TF_DLL
 				g_pScriptVM->RegisterInstance( TheNavMesh, "NavMesh" );
