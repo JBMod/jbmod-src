@@ -31,5 +31,5 @@ IncludeScript( "gamemodes/base.nut" );
 function OnPlayerSpawn( player )
 {
 	player.EquipSuit();
-	player.GiveItem( "weapon_physcannon" );
+	player.GiveItem( "weapon_physgun" );
 }
