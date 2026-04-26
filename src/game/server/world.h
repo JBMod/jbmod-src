@@ -33,6 +33,8 @@ public:
 	virtual void VPhysicsCollision( int index, gamevcollisionevent_t *pEvent ) {}
 	virtual void VPhysicsFriction( IPhysicsObject *pObject, float energy, int surfaceProps, int surfacePropsHit ) {}
 
+	virtual bool AcceptInput(const char *szInputName, CBaseEntity *pActivator, CBaseEntity *pCaller, variant_t Value, int outputID);
+	
 	inline void GetWorldBounds( Vector &vecMins, Vector &vecMaxs )
 	{
 		VectorCopy( m_WorldMins, vecMins );
