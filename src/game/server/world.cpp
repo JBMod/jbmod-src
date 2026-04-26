@@ -85,6 +85,16 @@ END_DATADESC()
 
 LINK_ENTITY_TO_CLASS( infodecal, CDecal );
 
+bool CWorld::AcceptInput(const char *szInputName, CBaseEntity *pActivator, CBaseEntity *pCaller, variant_t Value, int outputID)
+{
+	if (FStrEq(szInputName, "Kill"))
+	{
+		Warning("Prevented kill input on worldspawn from firing! Be careful next time.\n");
+		return false; // block the kill
+	}
+	return BaseClass::AcceptInput(szInputName, pActivator, pCaller, Value, outputID);
+}
+
 // UNDONE:  These won't get sent to joining players in multi-player
 void CDecal::Spawn( void )
 {
