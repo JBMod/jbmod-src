@@ -12,9 +12,18 @@
 #include "c_weapon__stubs.h"
 #include "clienteffectprecachesystem.h"
 #include "c_jbmod_player.h"
+#include "c_baseplayer.h"
+#include "usercmd.h"
+#include "materialsystem/imaterial.h"
+#include "materialsystem/imaterialvar.h"
+
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
+
+ConVar physgun_beam_color( "physgun_beam_color", "255 255 255", FCVAR_ARCHIVE );
+ConVar physgun_model_color( "physgun_model_color", "255 0 255", FCVAR_ARCHIVE );
+
 
 CLIENTEFFECT_REGISTER_BEGIN( PrecacheEffectGravityGun )
 CLIENTEFFECT_MATERIAL( "sprites/physbeam" )
@@ -80,9 +89,88 @@ public:
 		return BaseClass::KeyInput( down, keynum, pszCurrentBinding );
 	}
 
+	void CreateMove( float flInputSampleTime, CUserCmd *pCmd, const QAngle &vecOldViewAngles )
+	{
+		BaseClass::CreateMove( flInputSampleTime, pCmd, vecOldViewAngles );
+
+		if ( !pCmd )
+			return;
+
+		C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+		if ( !pPlayer )
+			return;
+
+		if ( pPlayer->GetActiveWeapon() != this )
+			return;
+
+		if ( !m_beam.m_active )
+			return;
+
+		if ( !( pCmd->buttons & IN_USE ) )
+			return;
+
+		const short nMouseX = pCmd->mousedx;
+		const short nMouseY = pCmd->mousedy;
+		if ( nMouseX == 0 && nMouseY == 0 )
+			return;
+
+		// Use the raw mouse deltas for server-side physgun rotation, but keep the local
+		// camera from turning while we're in rotate mode.
+		pCmd->mousedx = nMouseX;
+		pCmd->mousedy = nMouseY;
+		pCmd->viewangles = vecOldViewAngles;
+		QAngle localViewAngles = vecOldViewAngles;
+		engine->SetViewAngles( localViewAngles );
+	}
+
+static void ApplyPhysgunModelColor()
+{
+    int ir = 255, ig = 0, ib = 255;
+
+    if ( sscanf( physgun_model_color.GetString(), "%d %d %d", &ir, &ig, &ib ) != 3 )
+        return;
+
+    ir = clamp( ir, 0, 255 );
+    ig = clamp( ig, 0, 255 );
+    ib = clamp( ib, 0, 255 );
+
+    float r = ir / 255.0f;
+    float g = ig / 255.0f;
+    float b = ib / 255.0f;
+
+
+   
+// Basically the only way I could really think of, of doing this:
+
+    IMaterial *pMat = materials->FindMaterial(
+        "models/weapons/v_physcannon/v_superphyscannon_sheet",
+        TEXTURE_GROUP_MODEL
+    );
+
+    if ( !pMat || pMat->IsErrorMaterial() )
+    	
+        return;
+
+    bool found = false;
+    IMaterialVar *pTint = pMat->FindVar( "$selfillumtint", &found );
+
+    if ( found && pTint )
+    {
+    	
+        pTint->SetVecValue( r, g, b );
+    }
+}
+
+
+
+
+
 	void OnDataChanged( DataUpdateType_t updateType )
 	{
+
+		
 		BaseClass::OnDataChanged( updateType );
+		ApplyPhysgunModelColor();
 		m_beam.Update( this );
 	}
 
@@ -135,6 +223,9 @@ void C_BeamQuadratic::Update( C_BaseEntity *pOwner )
 }
 
 
+
+
+
 int	C_BeamQuadratic::DrawModel( int )
 {
 	Vector points[3];
@@ -149,6 +240,10 @@ int	C_BeamQuadratic::DrawModel( int )
 		return 0;
 	pEnt->GetAttachment( 1, points[0], tmpAngle );
 
+
+
+
+
 	points[1] = 0.5 * ( m_targetPosition + points[0] );
 
 	// a little noise 11t & 13t should be somewhat non-periodic looking
@@ -157,13 +252,32 @@ int	C_BeamQuadratic::DrawModel( int )
 
 	IMaterial *pMat = materials->FindMaterial( "sprites/physbeam", TEXTURE_GROUP_CLIENT_EFFECTS );
 	Vector color;
+	
 	if ( m_glueTouching )
 	{
 		color.Init( 1, 0, 0 );
 	}
 	else
 	{
-		color.Init( 1, 1, 1 );
+	int ir = 255, ig = 255, ib = 255;
+
+
+	if ( sscanf( physgun_beam_color.GetString(), "%d %d %d", &ir, &ig, &ib ) != 3 )
+	{
+    ir = ig = ib = 255; 
+	}
+
+	
+	ir = clamp( ir, 0, 255 );
+	ig = clamp( ig, 0, 255 );
+	ib = clamp( ib, 0, 255 );
+
+	
+	float r = ir / 255.0f;
+	float g = ig / 255.0f;
+	float b = ib / 255.0f;
+
+	color.Init( r, g, b );
 	}
 
 	float scrollOffset = gpGlobals->curtime - (int)gpGlobals->curtime;
@@ -179,3 +293,4 @@ const matrix3x4_t &C_BeamQuadratic::RenderableToWorldTransform()
 	AngleMatrix( GetRenderAngles(), GetRenderOrigin(), mat );
 	return mat;
 }
+

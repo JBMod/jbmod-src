@@ -49,7 +49,7 @@
 			// in folders where they don't exist.  (Searching a VPK is much faster than making an operating
 			// system call.)
 			game+mod			jbmod/jbmod_pak.vpk
-
+			game+mod 			jbmod/mp_models_dir.vpk
 			game				|all_source_engine_paths|hl2_complete/hl2_complete_textures.vpk
 			game				|all_source_engine_paths|hl2_complete/hl2_complete_sound_vo_english.vpk
 			game				|all_source_engine_paths|hl2_complete/hl2_complete_sound_misc.vpk
