@@ -18,6 +18,7 @@
 #include "client.h"
 #include "soundent.h"
 #include "gamerules.h"
+#include "jbmod_gamerules.h"
 #include "game.h"
 #include "physics.h"
 #include "entitylist.h"
@@ -1158,6 +1159,11 @@ static int FindPassableSpace( CBasePlayer *pPlayer, const Vector& direction, flo
 //------------------------------------------------------------------------------
 // Noclip
 //------------------------------------------------------------------------------
+
+ConVar sandbox_restrict_noclip_to_admins("sandbox_restrict_noclip_to_admins","0",FCVAR_NOTIFY, "If enabled, only admins can use noclip in sandbox mode.");
+
+
+
 void EnableNoClip( CBasePlayer *pPlayer )
 {
 	// Disengage from hierarchy
@@ -1169,10 +1175,26 @@ void EnableNoClip( CBasePlayer *pPlayer )
 
 void CC_Player_NoClip( void )
 {
-	if ( !sv_cheats->GetBool() )
-		return;
+	bool bSandboxGamemode = false;
 
-	CBasePlayer *pPlayer = ToBasePlayer( UTIL_GetCommandClient() ); 
+	if (JBModRules())
+		bSandboxGamemode = !Q_stricmp(JBModRules()->m_szGameMode, "sandbox");
+
+	if (bSandboxGamemode)
+	{
+		if (sandbox_restrict_noclip_to_admins.GetBool())
+		{
+			if (!UTIL_IsCommandIssuedByServerAdmin())
+				return;
+		}
+	}
+	else
+	{
+		if (!sv_cheats->GetBool())
+			return;
+	}
+
+	CBasePlayer* pPlayer = ToBasePlayer(UTIL_GetCommandClient());
 	if ( !pPlayer )
 		return;
 
@@ -1221,7 +1243,7 @@ void CC_Player_NoClip( void )
 	}
 }
 
-static ConCommand noclip("noclip", CC_Player_NoClip, "Toggle. Player becomes non-solid and flies.", FCVAR_CHEAT);
+static ConCommand noclip("noclip", CC_Player_NoClip, "Toggle. Player becomes non-solid and flies.");
 
 
 //------------------------------------------------------------------------------
