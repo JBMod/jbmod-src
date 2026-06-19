@@ -140,7 +140,7 @@ static void ApplyPhysgunModelColor()
 
 
    
-// Basically the only way I could really think of, of doing this:
+
 
     IMaterial *pMat = materials->FindMaterial(
         "models/weapons/v_physcannon/v_superphyscannon_sheet",
@@ -261,18 +261,18 @@ int	C_BeamQuadratic::DrawModel( int )
 	{
 	int ir = 255, ig = 255, ib = 255;
 
-
+	// Try to read 3 integers
 	if ( sscanf( physgun_beam_color.GetString(), "%d %d %d", &ir, &ig, &ib ) != 3 )
 	{
-    ir = ig = ib = 255; 
+    ir = ig = ib = 255; // fallback to white
 	}
 
-	
+	// Clamp to valid 0–255 range
 	ir = clamp( ir, 0, 255 );
 	ig = clamp( ig, 0, 255 );
 	ib = clamp( ib, 0, 255 );
 
-	
+	// Convert to 0.0–1.0
 	float r = ir / 255.0f;
 	float g = ig / 255.0f;
 	float b = ib / 255.0f;
