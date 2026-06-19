@@ -41,7 +41,7 @@ ConVar phys_gunsounds("phys_gunsounds", "1", FCVAR_ARCHIVE);
 static int g_physgunBeam;
 #define PHYSGUN_BEAM_SPRITE		"sprites/physbeam.vmt"
 
-#define MAX_PELLETS				2048
+#define MAX_PELLETS				512
 #define MAX_FREEZE				2048
 
 class CWeaponGravityGun;
