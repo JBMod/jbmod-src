@@ -23,7 +23,7 @@
 
 ConVar physgun_beam_color( "physgun_beam_color", "255 255 255", FCVAR_ARCHIVE );
 ConVar physgun_model_color( "physgun_model_color", "255 0 255", FCVAR_ARCHIVE );
-
+ConVar physgun_draw_beam("physgun_draw_beam", "1", FCVAR_ARCHIVE);
 
 CLIENTEFFECT_REGISTER_BEGIN( PrecacheEffectGravityGun )
 CLIENTEFFECT_MATERIAL( "sprites/physbeam" )
@@ -250,8 +250,18 @@ int	C_BeamQuadratic::DrawModel( int )
 	//points[1].z += 4*sin( gpGlobals->curtime*11 ) + 5*cos( gpGlobals->curtime*13 );
 	points[2] = m_worldPosition;
 
+
+	if (physgun_draw_beam.GetFloat() == 0)
+	{
+		return 0;
+	}
+	
 	IMaterial *pMat = materials->FindMaterial( "sprites/physbeam", TEXTURE_GROUP_CLIENT_EFFECTS );
 	Vector color;
+
+
+
+
 	
 	if ( m_glueTouching )
 	{
