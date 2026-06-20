@@ -23,6 +23,7 @@
 #include "SoundEmitterSystem/isoundemittersystembase.h"
 #include "ai_basenpc.h"
 #include "physics_prop_ragdoll.h"
+#include "usercmd.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -33,6 +34,9 @@ ConVar phys_gunforce( "phys_gunforce", "20e20", FCVAR_REPLICATED | FCVAR_NOTIFY 
 ConVar phys_guntorque( "phys_guntorque", "100", FCVAR_REPLICATED | FCVAR_NOTIFY );
 ConVar phys_gunglueradius( "phys_gunglueradius", "128", FCVAR_REPLICATED | FCVAR_NOTIFY );
 ConVar phys_gunjank( "phys_gunjank", "0", FCVAR_REPLICATED | FCVAR_NOTIFY );
+ConVar phys_gunrotate_sensitivity( "phys_gunrotate_sensitivity", "0.5", FCVAR_REPLICATED | FCVAR_NOTIFY );
+ConVar phys_gunsounds("phys_gunsounds", "1", FCVAR_ARCHIVE);
+
 
 static int g_physgunBeam;
 #define PHYSGUN_BEAM_SPRITE		"sprites/physbeam.vmt"
@@ -199,6 +203,7 @@ public:
 	}
 	void SetTargetOrientation( const QAngle &targetOrientation )
 	{
+
 		m_targetRotation = targetOrientation;
 		m_shadow.targetRotation = targetOrientation;
 		m_timeToArrive = gpGlobals->frametime;
@@ -300,12 +305,12 @@ void CGravControllerPoint::AttachEntity( CBasePlayer *pPlayer, CBaseEntity *pEnt
 {
 	if ( phys_gunjank.GetFloat() == 0 )
 	{
-		Vector vposition;
-		QAngle vangles;
-		pPhys->GetPosition( &vposition, &vangles );
-		Pickup_GetPreferredCarryAngles( pEntity, pPlayer, pPlayer->EntityToWorldTransform(), vangles );
-		m_controller = physenv->CreateMotionController( this );
-		m_controller->AttachObject( pPhys, true );
+		Vector vposition; // We first get the position and angles of the prop
+		QAngle vangles; // THen angles of set prop
+		pPhys->GetPosition( &vposition, &vangles ); // Then we get the position
+		Pickup_GetPreferredCarryAngles( pEntity, pPlayer, pPlayer->EntityToWorldTransform(), vangles ); // Get perfered carry angles
+		m_controller = physenv->CreateMotionController( this ); // Create a motion controller to control the motion of the prop
+		m_controller->AttachObject( pPhys, true ); // Attach the prop
 		m_attachedEntity = pEntity;
 		pPhys->Wake();
 		PhysSetGameFlags( pPhys, FVPHYSICS_PLAYER_HELD );
@@ -717,6 +722,11 @@ private:
 	int			m_freezeCount;
 	int			m_objectPelletCount;
 
+	QAngle m_lastViewAngles;
+	QAngle m_rotateStartObjectAngles;
+	bool m_wasRotating;
+
+
 	int			m_pelletHeld;
 	int			m_pelletAttract;
 	float		m_glueTime;
@@ -800,10 +810,12 @@ enum physgun_soundIndex { SI_LOCKEDON = 0, SI_SCANNING = 1, SI_LIGHTOBJECT = 2, 
 
 CWeaponGravityGun::CWeaponGravityGun()
 {
-	m_active = false;
-	m_bFiresUnderwater = true;
-	m_pelletAttract = -1;
-	m_pelletHeld = -1;
+    m_active = false;
+    m_bFiresUnderwater = true;
+    m_pelletAttract = -1;
+    m_pelletHeld = -1;
+
+    m_wasRotating = false;
 }
 
 //=========================================================
@@ -867,17 +879,17 @@ void CWeaponGravityGun::EffectUpdate( void )
 	if ( !pOwner )
 		return;
 
-	pOwner->EyeVectors( &forward, &right, NULL );
+	pOwner->EyeVectors( &forward, &right, NULL ); // First we get the eye vectors
 
-	start = pOwner->Weapon_ShootPosition();
-	Vector end = start + forward * 4096;
+	start = pOwner->Weapon_ShootPosition(); // Then we get the weapon shoot position where the physics gun beam is aimming
+	Vector end = start + forward * 4096; // Then the end is set, the end position of the player's current view where they are aimming times 4096 for some reason
 
 	UTIL_TraceLine( start, end, MASK_SHOT, pOwner, COLLISION_GROUP_NONE, &tr );
 	end = tr.endpos;
 	float distance = tr.fraction * 4096;
 	if ( tr.fraction != 1 )
 	{
-		// too close to the player, drop the object
+		// too close to the player, drop the object Should I Remove this?
 		if ( distance < 36 )
 		{
 			DetachObject();
@@ -896,18 +908,14 @@ void CWeaponGravityGun::EffectUpdate( void )
 		m_lastYaw = pOwner->EyeAngles().y;
 	}
 
-	// Add the incremental player yaw to the target transform
-	if ( phys_gunjank.GetFloat() > 0 )
-	{
-		matrix3x4_t curMatrix, incMatrix, nextMatrix;
-		AngleMatrix( m_gravCallback.m_targetRotation, curMatrix );
-		AngleMatrix( QAngle( 0, pOwner->EyeAngles().y - m_lastYaw, 0 ), incMatrix );
-		ConcatTransforms( incMatrix, curMatrix, nextMatrix );
-		MatrixAngles( nextMatrix, m_gravCallback.m_targetRotation );
-		m_lastYaw = pOwner->EyeAngles().y;
-	}
-
 	CBaseEntity *pObject = m_hObject;
+	const CUserCmd *pCmd = pOwner->GetCurrentUserCommand();
+	
+
+
+
+
+
 	if ( pObject )
 	{
 		if ( phys_gunjank.GetFloat() == 0 )
@@ -943,31 +951,78 @@ void CWeaponGravityGun::EffectUpdate( void )
 		}
 
 		Vector newPosition = start + forward * m_distance;
-		// 24 is a little larger than 16 * sqrt(2) (extent of player bbox)
-		// HACKHACK: We do this so we can "ignore" the player and the object we're manipulating
-		// If we had a filter for tracelines, we could simply filter both ents and start from "start"
-		Vector awayfromPlayer = start + forward * 24;
 
-		UTIL_TraceLine( start, awayfromPlayer, MASK_SOLID, pOwner, COLLISION_GROUP_NONE, &tr );
-		if ( tr.fraction == 1 )
-		{
-			UTIL_TraceLine( awayfromPlayer, newPosition, MASK_SOLID, pObject, COLLISION_GROUP_NONE, &tr );
-			Vector dir = tr.endpos - newPosition;
-			float distance = VectorNormalize( dir );
-			float maxDist = m_gravCallback.m_maxVel * gpGlobals->frametime;
-			if ( distance > maxDist )
-			{
-				newPosition += dir * maxDist;
-			}
-			else
-			{
-				newPosition = tr.endpos;
-			}
-		}
-		else
-		{
-			newPosition = tr.endpos;
-		}
+
+Vector awayfromPlayer = start + forward * 24;
+
+UTIL_TraceLine( start, awayfromPlayer, MASK_SOLID, pOwner, COLLISION_GROUP_NONE, &tr );
+
+if ( tr.fraction == 1 )
+{
+    UTIL_TraceLine( awayfromPlayer, newPosition, MASK_SOLID, pObject, COLLISION_GROUP_NONE, &tr );
+
+    Vector dir = tr.endpos - newPosition;
+    float distance = VectorNormalize( dir );
+    float maxDist = m_gravCallback.m_maxVel * gpGlobals->frametime;
+
+
+
+    if ( distance > maxDist )
+        newPosition += dir * maxDist;
+    else
+        newPosition = tr.endpos;
+}
+else
+{
+    newPosition = tr.endpos;
+}
+
+    m_gravCallback.SetTargetPosition( newPosition );
+
+bool bRotateMode = ( pObject && ( pOwner->m_nButtons & IN_USE ) && pCmd != NULL );
+
+if ( bRotateMode && !m_wasRotating )
+{
+    m_lastViewAngles = pOwner->EyeAngles();
+    m_rotateStartObjectAngles = m_gravCallback.m_targetRotation;
+
+    m_wasRotating = true;
+}
+else if ( !bRotateMode )
+{
+    m_wasRotating = false;
+}
+
+
+
+
+if ( bRotateMode )
+{
+    float flRotateSensitivity = phys_gunrotate_sensitivity.GetFloat();
+
+    float flPitchDelta = (float)pCmd->mousedy * flRotateSensitivity;
+    float flYawDelta   = -(float)pCmd->mousedx * flRotateSensitivity;
+
+    flPitchDelta = clamp( flPitchDelta, -8.0f, 8.0f );
+    flYawDelta   = clamp( flYawDelta, -8.0f, 8.0f );
+
+    QAngle rotateDelta;
+    rotateDelta.Init( flPitchDelta, flYawDelta, 0.0f );
+
+    matrix3x4_t curMatrix, incMatrix, nextMatrix;
+
+    AngleMatrix( m_gravCallback.m_targetRotation, curMatrix );
+    AngleMatrix( rotateDelta, incMatrix );
+
+    ConcatTransforms( curMatrix, incMatrix, nextMatrix );
+
+    MatrixAngles( nextMatrix, m_gravCallback.m_targetRotation );
+
+    m_gravCallback.SetTargetOrientation( m_gravCallback.m_targetRotation );
+}
+
+
+
 
 		CreatePelletAttraction( phys_gunglueradius.GetFloat(), pObject );
 
@@ -998,7 +1053,7 @@ void CWeaponGravityGun::EffectUpdate( void )
 			}
 		}
 
-		m_gravCallback.SetTargetPosition( newPosition );
+	
 		Vector dir = ( newPosition - pObject->GetLocalOrigin() );
 		m_movementLength = dir.Length();
 	}
@@ -1018,12 +1073,25 @@ void CWeaponGravityGun::EffectUpdate( void )
 		m_gravCallback.ClearAutoAlign();
 	}
 
+
+
+
 	NetworkStateChanged();
 }
 
 void CWeaponGravityGun::SoundCreate( void )
 {
+
+	if(phys_gunsounds.GetFloat() == 0)
+	{
+		return;
+	}
+
+
 	m_soundState = SS_SCANNING;
+
+
+
 	SoundStart();
 }
 
@@ -1078,6 +1146,13 @@ static float UTIL_LineFraction( float value, float low, float high, float scale 
 
 void CWeaponGravityGun::SoundStart( void )
 {
+
+	if(phys_gunsounds.GetFloat() == 0)
+	{
+			return;
+	}
+	
+
 	CPASAttenuationFilter filter( GetOwner() );
 	filter.MakeReliable();
 
@@ -1105,6 +1180,13 @@ void CWeaponGravityGun::SoundStart( void )
 void CWeaponGravityGun::SoundUpdate( void )
 {
 	int newState;
+
+	if(phys_gunsounds.GetFloat() == 0)
+	{
+		return;
+	}
+
+
 
 	if ( m_hObject )
 		newState = SS_LOCKEDON;
@@ -1446,16 +1528,16 @@ void CWeaponGravityGun::DetachObject( void )
 
 void CWeaponGravityGun::AttachObject( CBaseEntity *pObject, const Vector &start, const Vector &end, float distance )
 {
-	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
+	CBasePlayer *pOwner = ToBasePlayer( GetOwner() ); // Make sure it's a player that owns this
 	if ( !pOwner )
 		return;
 
-	m_useDown = false;
+	m_useDown = false; // Use is not down
 	IPhysicsObject *pPhysics = pObject ? ( pObject->VPhysicsGetObject() ) : NULL;
-	if ( pPhysics && pObject->GetMoveType() == MOVETYPE_VPHYSICS )
+	if ( pPhysics && pObject->GetMoveType() == MOVETYPE_VPHYSICS ) // If it's prop_physics
 	{
-		pPhysics->EnableMotion( true );
-		SortFreezeList();
+		pPhysics->EnableMotion( true ); // Enable motion true
+		SortFreezeList(); // Sort the freeze list of props
 
 		if ( pObject->GetCollisionGroup() == COLLISION_GROUP_DEBRIS )
 			pObject->SetCollisionGroup( COLLISION_GROUP_INTERACTIVE_DEBRIS );
@@ -1715,3 +1797,4 @@ bool CWeaponGravityGun::Reload( void )
 
 	return false;
 }
+
